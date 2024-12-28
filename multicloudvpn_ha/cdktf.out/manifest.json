@@ -1,0 +1,16 @@
+{
+  "stacks": {
+    "app": {
+      "annotations": [
+      ],
+      "constructPath": "app",
+      "dependencies": [
+      ],
+      "name": "app",
+      "stackMetadataPath": "stacks/app/metadata.json",
+      "synthesizedStackPath": "stacks/app/cdk.tf.json",
+      "workingDirectory": "stacks/app"
+    }
+  },
+  "version": "0.20.10"
+}
