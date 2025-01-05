@@ -12,7 +12,8 @@ interface VpnGatewayParams {
 }
 
 export function createAwsVpnGateway(scope: Construct, provider: AwsProvider, params: VpnGatewayParams) {
-  // 仮想プライベートゲートウェイの作成
+
+  // Creating a Virtual Private Gateway
     const vpnGateway = new VpnGateway(scope, "cmk_vgw", {
         provider: provider, 
         vpcId: params.vpcId,
@@ -22,7 +23,7 @@ export function createAwsVpnGateway(scope: Construct, provider: AwsProvider, par
         },
   });
 
-  // 仮想プライベートゲートウェイのルート伝播の設定
+  // Configure route propagation for virtual private gateways
   new VpnGatewayRoutePropagation(scope, "cmk_vge_rp", {
     provider: provider, 
     vpnGatewayId: vpnGateway.id,

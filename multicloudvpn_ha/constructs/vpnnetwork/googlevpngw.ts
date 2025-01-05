@@ -12,7 +12,6 @@ interface GoogleVpnParams {
 }
 
 export function createGoogleVpnGateway(scope: Construct, provider: GoogleProvider, params: GoogleVpnParams) {
-  //環境変数がdevelopの場合はシングル構成にできるようにする
 
   // VPN Gateway
   const vpnGateway = new ComputeHaVpnGateway(scope, `${params.connectDestination}_gcp_ha_vpn`, {

@@ -4,11 +4,13 @@ const vpcName = 'my-gcp-vpc'
 export const googleVpcResourcesparams = {
     vpcName: vpcName,
     subnets: [
-      { name: 'subnet1', cidr: '10.0.10.0/24', region: 'asia-northeast1' },
-      { name: 'subnet2', cidr: '10.0.20.0/24', region: 'asia-northeast1' },
+      { name: 'subnet1', cidr: '10.1.10.0/24', region: 'asia-northeast1' },
+      { name: 'subnet2', cidr: '10.1.20.0/24', region: 'asia-northeast1' },
     ],
     firewallIngressRules: [
-      { name: 'internal-rule', sourceRanges: ['10.0.0.0/16'], priority: 1000 },
+      { name: 'internal-aws-rule', sourceRanges: ['10.0.0.0/16'], priority: 1000 },
+      { name: 'internal-google-rule', sourceRanges: ['10.1.0.0/16'], priority: 1000 },
+      { name: 'internal-azure-rule', sourceRanges: ['10.2.0.0/16'], priority: 1000 },
     ],
     firewallEgressRules: [
       { name: 'vpn-rule', sourceRanges: ['0.0.0.0/0'], destinationRanges: ['0.0.0.0/0'], priority: 1000 },
@@ -23,6 +25,16 @@ export const googleAwsVpnParams = {
   externalGatewayName: "aws-external-gateway",
   ikeVersion:2
 }
+
+export const googleAzureVpnParams = {
+  connectDestination:"azure",
+  vpnGatewayName: 'azure-google-vpngateway',
+  cloudRouterName: 'azure-google-cloud-router',
+  bgpGoogleAsn: 65000,
+  externalGatewayName: "azure-external-gateway",
+  ikeVersion:2
+}
+
 
 
 /* GCE */

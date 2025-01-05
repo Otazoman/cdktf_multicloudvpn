@@ -1,15 +1,21 @@
 const resourceGroup = 'rg_multicloud';
 const location = 'Japan East';
+const vnetName = 'my-azure-vnet';
+
+export const azureCommonparams = {
+  resourceGroup : resourceGroup,
+  location: location,
+}
 
 /* V-NET */
 export const azureVnetResourcesparams = {
     resourceGroupName: resourceGroup,
     location: location,
-    vnetName: 'my-azure-vnet',
-    vnetAddressSpace: '10.1.0.0/16',
+    vnetName: vnetName,
+    vnetAddressSpace: '10.2.0.0/16',
     subnets: [
-      { name: 'subnet1', cidr: '10.1.1.0/24' },
-      { name: 'subnet2', cidr: '10.1.2.0/24' },
+      { name: 'subnet1', cidr: '10.2.10.0/24' },
+      { name: 'subnet2', cidr: '10.2.20.0/24' },
     ],
     nsgRules: [
       {
@@ -79,6 +85,35 @@ export const azureVnetResourcesparams = {
         destinationAddressPrefix: '*',
       },
     ],
+}
+
+/* VPN */
+export const azureVpnparams = {
+  gatewaySubnetCidr: '10.2.100.0/24',
+  publicIpNames: ['vpn-gateway-ip-1', 'vpn-gateway-ip-2'],
+  type: 'Vpn',
+  vpnType: 'RouteBased',
+  sku: 'VpnGw1',
+  azureAsn: 65515,
+  vpnConnectionType: "IPsec",
+  pipAlloc: 'Dynamic',
+  azureAwsGwIp1ip1: '169.254.21.1',
+  azureAwsGwIp1ip2: '169.254.21.5',
+  azureAwsGwIp2ip1: '169.254.22.1',
+  azureAwsGwIp2ip2: '169.254.22.5',
+  awsGwIp1Cidr: ['169.254.21.0/30', '169.254.22.0/30'],
+  awsGwIp2Cidr: ['169.254.21.4/30', '169.254.22.4/30'],
+  awsGwIp1ip1: '169.254.21.2',
+  awsGwIp1ip2: '169.254.21.6',
+  awsGwIp2ip1: '169.254.22.2',
+  awsGwIp2ip2: '169.254.22.6',
+  redundancyType: "TWO_IPS_REDUNDANCY",
+  googleGwIp1: '169.254.21.9',
+  googleGwIp2: '169.254.21.9',
+  googlePerrIp1:'169.254.21.10',
+  googlePeerIp2: '169.254.22.10',
+  presharedKey: 'test#01',
+  retentionInDays: 30,
 }
 
 /* AzureVM */

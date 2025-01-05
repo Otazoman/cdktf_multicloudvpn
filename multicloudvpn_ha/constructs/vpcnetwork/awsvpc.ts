@@ -19,6 +19,7 @@ interface AwsResourcesParams {
   allowedPorts: number[];
   ingressCidrBlocks: string[];
   allowprotocol: string;
+  description: string;
   defaultRouteTableName: string;
 }
 
@@ -57,6 +58,7 @@ export function createAwsVpcResources(scope: Construct, provider: AwsProvider, p
       toPort: port,
       protocol: params.allowprotocol,
       cidrBlocks: params.ingressCidrBlocks,
+      description: params.description,
     })),
     egress: [{
       fromPort: 0,
