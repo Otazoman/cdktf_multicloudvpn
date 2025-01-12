@@ -97,6 +97,11 @@ export const azureVpnparams = {
   azureAsn: 65515,
   vpnConnectionType: "IPsec",
   pipAlloc: 'Dynamic',
+  retentionInDays: 30,
+}
+
+export const azureAwsVpnparams = {
+  conneectDestination: 'aws',
   azureAwsGwIp1ip1: '169.254.21.1',
   azureAwsGwIp1ip2: '169.254.21.5',
   azureAwsGwIp2ip1: '169.254.22.1',
@@ -107,13 +112,15 @@ export const azureVpnparams = {
   awsGwIp1ip2: '169.254.21.6',
   awsGwIp2ip1: '169.254.22.2',
   awsGwIp2ip2: '169.254.22.6',
-  redundancyType: "TWO_IPS_REDUNDANCY",
+}
+export const azureGoogleVpnparams = {
+  conneectDestination: 'google',
+  // googleIpCidr: ['169.254.21.8/30', '169.254.22.8/30'],
   googleGwIp1: '169.254.21.9',
-  googleGwIp2: '169.254.21.9',
+  googleGwIp2: '169.254.22.9',
   googlePerrIp1:'169.254.21.10',
   googlePeerIp2: '169.254.22.10',
   presharedKey: 'test#01',
-  retentionInDays: 30,
 }
 
 /* AzureVM */

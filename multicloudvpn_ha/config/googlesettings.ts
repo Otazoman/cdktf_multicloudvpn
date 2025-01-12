@@ -3,6 +3,7 @@ const vpcName = 'my-gcp-vpc'
 
 export const googleVpcResourcesparams = {
     vpcName: vpcName,
+    vpcCidrblock: '10.1.0.0/16' ,
     subnets: [
       { name: 'subnet1', cidr: '10.1.10.0/24', region: 'asia-northeast1' },
       { name: 'subnet2', cidr: '10.1.20.0/24', region: 'asia-northeast1' },

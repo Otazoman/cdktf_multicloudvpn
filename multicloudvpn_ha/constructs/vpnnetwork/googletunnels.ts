@@ -12,8 +12,9 @@ interface ExternalVpnGatewayParams {
 
 interface TunnelConfig {
   preshared_key: string;
-  cgw_inside_address: string;
-  vgw_inside_address: string;
+  apipaCidr?: string;
+  peerAddress: string;
+  ipAddress?: string;
 }
 
 interface GoogleVpnParams {
@@ -29,65 +30,69 @@ interface GoogleVpnParams {
   };
   vpnConnections: TunnelConfig[];
   externalVpnGateway: ExternalVpnGatewayParams;
-  connectDestination: string; // "AWS" or "Azure"
+  connectDestination: string;
 }
 
 export function createGooglePeerTunnel(scope: Construct, provider: GoogleProvider, params: GoogleVpnParams) {
+  const isAws = params.connectDestination.toLowerCase() === 'aws';
+  const tunnelCount = isAws ? 4 : 2;
+
   // External Gateway
   const externalVpnGateway = new ComputeExternalVpnGateway(scope, params.externalVpnGateway.name, {
     provider: provider,
     name: params.externalVpnGateway.name,
-    redundancyType: params.connectDestination === 'aws' ? "FOUR_IPS_REDUNDANCY" : "TWO_IPS_REDUNDANCY",
-    interface: params.externalVpnGateway.interfaces.map((iface, index) => ({
+    redundancyType: isAws ? "FOUR_IPS_REDUNDANCY" : "TWO_IPS_REDUNDANCY",
+    interface: params.externalVpnGateway.interfaces.slice(0, tunnelCount).map((iface, index) => ({
       id: index,
       ipAddress: iface.ipAddress,
     })),
   });
 
   // Vpn Tunnel
-  const vpnTunnels = params.vpnConnections.map((tunnel, index) => 
+  const vpnTunnels = params.vpnConnections.slice(0, tunnelCount).map((tunnel, index) => 
     new ComputeVpnTunnel(scope, `VpnTunnel${params.connectDestination}-${index + 1}`, {
       provider,
-      name: `${params.vpnTnnelname}-${params.connectDestination}-${index + 1}`,
+      name: `${params.vpnTnnelname}-${index + 1}`,
       vpnGateway: params.vpnGateway.vpnGatewayId,
       vpnGatewayInterface: Math.floor(index / 2),
       peerExternalGateway: externalVpnGateway.id,
-      peerExternalGatewayInterface: index,
+      peerExternalGatewayInterface: isAws ? index : index % 2,
       sharedSecret: tunnel.preshared_key,
       router: params.routerName,
       ikeVersion: params.ikeVersion,
     })
   );
 
-  // Peer Connection
+  // Router Interfaces
   const routerInterfaces = vpnTunnels.map((tunnel, index) => {
-    const tunnelIndex = index % 2;
-    const connectionIndex = Math.floor(index / 2);
-
     return new ComputeRouterInterface(scope, `RouterInterface${params.connectDestination}-${index + 1}`, {
       provider,
-      name: `${params.routerInterfaceName}-${params.connectDestination}-${index + 1}`,
+      name: `${params.routerInterfaceName}-${index + 1}`,
       router: params.routerName,
-      ipRange: `${params.vpnConnections[connectionIndex * 2 + tunnelIndex].cgw_inside_address}/30`,
+      ...(isAws ? { ipRange: params.vpnConnections[index].apipaCidr } : {}),
+      //ipRange: params.vpnConnections[index].apipaCidr,
       vpnTunnel: tunnel.name,
     });
   });
 
+  // Router Peers
   const routerPeers = routerInterfaces.map((routerInterface, index) => {
-    const tunnelIndex = index % 2;
-    const connectionIndex = Math.floor(index / 2);
-
-    return new ComputeRouterPeer(scope, `RouterPeer${params.connectDestination}-${index + 1}`, {
+    const connection = params.vpnConnections[index];
+    const peerConfig: any = {
       provider,
-      name: `${params.routerPeerName}-${params.connectDestination}-${index + 1}`,
+      name: `${params.routerPeerName}-${index + 1}`,
       router: params.routerName,
-      peerIpAddress: params.vpnConnections[connectionIndex * 2 + tunnelIndex].vgw_inside_address,
+      peerIpAddress: connection.peerAddress,
       peerAsn: params.vpnGateway.peerAsn,
       interface: routerInterface.name,
       advertiseMode: "CUSTOM",
       advertisedRoutePriority: 100,
       advertisedGroups: ["ALL_SUBNETS"],
-    });
+    };
+    if (connection.ipAddress !== undefined) {
+      peerConfig.ipAddress = connection.ipAddress;
+    }
+    return new ComputeRouterPeer(scope, `RouterPeer${params.connectDestination}-${index + 1}`, peerConfig);
   });
 
   return {

@@ -17,6 +17,7 @@ interface TunnelConfig {
 interface VpnGatewayParams {
   resourceGroupName: string;
   location: string;
+  conneectDestination: string;
   virtualNetworkGatewayId: string;
   vpnConnectionType: string
   tunnels: TunnelConfig[];
@@ -26,7 +27,7 @@ export function createAzureLocalGateways(scope: Construct, provider: AzurermProv
   const resources = params.tunnels.map((tunnel, index) => {
 
     // Creating a Local Network Gateway
-    const localNetworkGateway = new LocalNetworkGateway(scope, `local_gateway_${index}`, {
+    const localNetworkGateway = new LocalNetworkGateway(scope, `local-gateway${params.conneectDestination}-${index}`, {
       name: `${tunnel.localNetworkGatewayName}-${index + 1}`,
       resourceGroupName: params.resourceGroupName,
       location: params.location,
@@ -39,7 +40,7 @@ export function createAzureLocalGateways(scope: Construct, provider: AzurermProv
     });
 
     // Creating a VPN Connection
-    const vpnConnection = new VirtualNetworkGatewayConnection(scope, `azure_to_remote_${index}`, {
+    const vpnConnection = new VirtualNetworkGatewayConnection(scope, `azure-to${params.conneectDestination}-remote-${index}`, {
       provider: provider,
       name: `${tunnel.localNetworkGatewayName}-connection-${index + 1}`,
       resourceGroupName: params.resourceGroupName,

@@ -22,7 +22,6 @@ export const awsVpnparams = {
 }
 export const awsGoogleVpnparams = {
   conneectDestination: 'google',
-  redundancyType: "FOUR_IPS_REDUNDANCY",
   type: 'ipsec.1',
 }
 export const awsAzureVpnparams = {
