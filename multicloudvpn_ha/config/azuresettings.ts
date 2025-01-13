@@ -118,7 +118,7 @@ export const azureGoogleVpnparams = {
   // googleIpCidr: ['169.254.21.8/30', '169.254.22.8/30'],
   googleGwIp1: '169.254.21.9',
   googleGwIp2: '169.254.22.9',
-  googlePerrIp1:'169.254.21.10',
+  googlePeerIp1:'169.254.21.10',
   googlePeerIp2: '169.254.22.10',
   presharedKey: 'test#01',
 }

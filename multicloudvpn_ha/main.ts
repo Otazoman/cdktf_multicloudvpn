@@ -16,9 +16,9 @@ import { googleAwsVpnParams, googleAzureVpnParams, googleVpcResourcesparams } fr
 // import { awsVpcResourcesparams, ec2Configs } from "./config/awssettings";
 // import { azureVmsConfigparams, azureVnetResourcesparams } from "./config/azuresettings";
 // import { gceInstancesParams, googleVpcResourcesparams } from "./config/googlesettings";
-// import { createAwsEc2Instances } from "./resources/vmresources/awsec2";
-// import { createAzureVms } from "./resources/vmresources/azurevm";
-// import { createGoogleGceInstances } from "./resources/vmresources/googlegce";
+// import { createAwsEc2Instances } from "./constructs/vmresources/awsec2";
+// import { createAzureVms } from "./constructs/vmresources/azurevm";
+// import { createGoogleGceInstances } from "./constructs/vmresources/googlegce";
 
 import { createAwsVpcResources } from "./constructs/vpcnetwork/awsvpc";
 import { createAzureVnetResources } from "./constructs/vpcnetwork/azurevnet";
@@ -168,11 +168,11 @@ class MultiCloudVpnStack extends TerraformStack {
       awsGwIp1ip2: azureAwsVpnparams.awsGwIp1ip2,
       awsGwIp2ip1: azureAwsVpnparams.awsGwIp2ip1,
       awsGwIp2ip2: azureAwsVpnparams.awsGwIp2ip2,
-      // googleIpCidr: azureGoogleVpnparams.googleIpCidr,
+      //googleIpCidr: azureGoogleVpnparams.googleIpCidr,
       googleGWip1: azureGoogleVpnparams.googleGwIp1,
       googleGWip2: azureGoogleVpnparams.googleGwIp2,
-      googlePerrIp1: azureGoogleVpnparams.googlePerrIp1,
-      googlePerrIp2: azureGoogleVpnparams.googlePeerIp2,
+      googlePeerIp1: azureGoogleVpnparams.googlePeerIp1,
+      googlePeerIp2: azureGoogleVpnparams.googlePeerIp2,
     },
     diagnosticSettings: {
       retentionInDays: azureVpnparams.retentionInDays
@@ -243,17 +243,15 @@ class MultiCloudVpnStack extends TerraformStack {
   const azureVpnConnections = azureVng.publicIpData.flatMap(pip => [
      {
         address: pip.ipAddress,
-        ipAddress: azureVpnGatewayResourceparams.vpnProps.googleGWip1,
+        ipAddress: azureVpnGatewayResourceparams.vpnProps.googlePeerIp1,
         preshared_key: azureGoogleVpnparams.presharedKey,
-        // apipaCidr: azureVpnGatewayResourceparams.vpnProps.googleIpCidr[0],
-        peerAddress: azureVpnGatewayResourceparams.vpnProps.googlePerrIp1,
+        peerAddress: azureVpnGatewayResourceparams.vpnProps.googleGWip1,
       },
       {
         address: pip.ipAddress,
-        ipAddress: azureVpnGatewayResourceparams.vpnProps.googleGWip2,
+        ipAddress: azureVpnGatewayResourceparams.vpnProps.googlePeerIp2,
         preshared_key: azureGoogleVpnparams.presharedKey,
-        // apipaCidr: azureVpnGatewayResourceparams.vpnProps.googleIpCidr[1],
-        peerAddress: azureVpnGatewayResourceparams.vpnProps.googlePerrIp2,
+        peerAddress: azureVpnGatewayResourceparams.vpnProps.googleGWip2,
       }
   ]);    
 
@@ -282,12 +280,12 @@ class MultiCloudVpnStack extends TerraformStack {
     routerInterfaceName: `${googleVpcResources.vpc.name}-gcp-azure-router-interface`,
     routerPeerName: `${googleVpcResources.vpc.name}-gcp-azure-router-peer`,
     tunnelCount: 2,
+    ikeVersion: googleAzureVpnParams.ikeVersion,
     routerName: googleAzureVpnParams.cloudRouterName,
     vpnGateway: {
       vpnGatewayId: googleAzureVpnGateways.vpnGateway.id,
       peerAsn:azureVpnparams.azureAsn,
     },
-
     awsHaVpnGatewayIpAddresses: azureVng.publicIpData.map(pip => pip.ipAddress),
     vpnConnections: azureVpnConnections,
     connectDestination: googleAzureVpnParams.connectDestination,
@@ -310,7 +308,7 @@ class MultiCloudVpnStack extends TerraformStack {
         googleAzureVpnTunnels.push({
           address: interfaceObj.ipAddress,
           shared_key: azureGoogleVpnparams.presharedKey,
-          cidrhost: index === 0 ? azureGoogleVpnparams.googleGwIp1 : azureGoogleVpnparams.googleGwIp2,
+          cidrhost: index === 0 ? azureGoogleVpnparams.googlePeerIp1 : azureGoogleVpnparams.googlePeerIp2,
         });
       }
     }
@@ -335,8 +333,6 @@ class MultiCloudVpnStack extends TerraformStack {
   };
   // Create Azure Local Gateway(google)
   createAzureLocalGateways(this, azureProvider, googleAzureLocalGatewayParams);
-    
-
     
     //     /* VMInstances */
     //     // AWS
@@ -374,9 +370,6 @@ class MultiCloudVpnStack extends TerraformStack {
     //       sshKey:sshKey,
     //     };
     //     createAzureVms(this, azureProvider, azureVmParams);
-
-    //   }
-    // }
 
   }
 }

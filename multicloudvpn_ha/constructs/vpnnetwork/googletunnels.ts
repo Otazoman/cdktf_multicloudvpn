@@ -22,7 +22,7 @@ interface GoogleVpnParams {
   routerInterfaceName: string;
   routerPeerName: string;
   tunnelCount: number;
-  ikeVersion?: number;
+  ikeVersion: number;
   routerName: string;
   vpnGateway: {
     vpnGatewayId: string;
@@ -70,7 +70,6 @@ export function createGooglePeerTunnel(scope: Construct, provider: GoogleProvide
       name: `${params.routerInterfaceName}-${index + 1}`,
       router: params.routerName,
       ...(isAws ? { ipRange: params.vpnConnections[index].apipaCidr } : {}),
-      //ipRange: params.vpnConnections[index].apipaCidr,
       vpnTunnel: tunnel.name,
     });
   });
@@ -78,21 +77,16 @@ export function createGooglePeerTunnel(scope: Construct, provider: GoogleProvide
   // Router Peers
   const routerPeers = routerInterfaces.map((routerInterface, index) => {
     const connection = params.vpnConnections[index];
-    const peerConfig: any = {
+    return new ComputeRouterPeer(scope, `RouterPeer${params.connectDestination}-${index + 1}`, {
       provider,
       name: `${params.routerPeerName}-${index + 1}`,
       router: params.routerName,
       peerIpAddress: connection.peerAddress,
       peerAsn: params.vpnGateway.peerAsn,
       interface: routerInterface.name,
-      advertiseMode: "CUSTOM",
       advertisedRoutePriority: 100,
-      advertisedGroups: ["ALL_SUBNETS"],
-    };
-    if (connection.ipAddress !== undefined) {
-      peerConfig.ipAddress = connection.ipAddress;
-    }
-    return new ComputeRouterPeer(scope, `RouterPeer${params.connectDestination}-${index + 1}`, peerConfig);
+      ...(connection.ipAddress !== undefined && { ipAddress: connection.ipAddress }),
+    });
   });
 
   return {
