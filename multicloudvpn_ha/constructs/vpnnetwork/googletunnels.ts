@@ -54,7 +54,7 @@ export function createGooglePeerTunnel(scope: Construct, provider: GoogleProvide
       provider,
       name: `${params.vpnTnnelname}-${index + 1}`,
       vpnGateway: params.vpnGateway.vpnGatewayId,
-      vpnGatewayInterface: Math.floor(index / 2),
+      vpnGatewayInterface: isAws ? Math.floor(index / 2) : index ,
       peerExternalGateway: externalVpnGateway.id,
       peerExternalGatewayInterface: isAws ? index : index % 2,
       sharedSecret: tunnel.preshared_key,

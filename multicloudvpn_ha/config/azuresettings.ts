@@ -115,7 +115,6 @@ export const azureAwsVpnparams = {
 }
 export const azureGoogleVpnparams = {
   conneectDestination: 'google',
-  // googleIpCidr: ['169.254.21.8/30', '169.254.22.8/30'],
   googleGwIp1: '169.254.21.9',
   googleGwIp2: '169.254.22.9',
   googlePeerIp1:'169.254.21.10',
