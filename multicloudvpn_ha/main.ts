@@ -1,24 +1,22 @@
 import { AwsProvider } from "@cdktf/provider-aws/lib/provider";
 import { AzurermProvider } from '@cdktf/provider-azurerm/lib/provider';
 import { GoogleProvider } from '@cdktf/provider-google/lib/provider';
-
-// import { PrivateKey } from "@cdktf/provider-tls/lib/private-key";
-// import { TlsProvider } from "@cdktf/provider-tls/lib/provider";
-// import { App, TerraformOutput, TerraformStack } from "cdktf";
-
-import { App, TerraformStack } from "cdktf";
+import { PrivateKey } from "@cdktf/provider-tls/lib/private-key";
+import { TlsProvider } from "@cdktf/provider-tls/lib/provider";
+import { App, TerraformOutput, TerraformStack } from "cdktf";
 import { Construct } from "constructs";
 
 import { awsAzureVpnparams, awsGoogleVpnparams, awsVpcResourcesparams, awsVpnparams } from "./config/awssettings";
 import { azureAwsVpnparams, azureCommonparams, azureGoogleVpnparams, azureVnetResourcesparams, azureVpnparams } from "./config/azuresettings";
 import { googleAwsVpnParams, googleAzureVpnParams, googleVpcResourcesparams } from "./config/googlesettings";
 
-// import { awsVpcResourcesparams, ec2Configs } from "./config/awssettings";
-// import { azureVmsConfigparams, azureVnetResourcesparams } from "./config/azuresettings";
-// import { gceInstancesParams, googleVpcResourcesparams } from "./config/googlesettings";
-// import { createAwsEc2Instances } from "./constructs/vmresources/awsec2";
-// import { createAzureVms } from "./constructs/vmresources/azurevm";
-// import { createGoogleGceInstances } from "./constructs/vmresources/googlegce";
+import { ec2Configs } from "./config/awssettings";
+import { azureVmsConfigparams } from "./config/azuresettings";
+import { gceInstancesParams } from "./config/googlesettings";
+
+import { createAwsEc2Instances } from "./constructs/vmresources/awsec2";
+import { createAzureVms } from "./constructs/vmresources/azurevm";
+import { createGoogleGceInstances } from "./constructs/vmresources/googlegce";
 
 import { createAwsVpcResources } from "./constructs/vpcnetwork/awsvpc";
 import { createAzureVnetResources } from "./constructs/vpcnetwork/azurevnet";
@@ -333,42 +331,42 @@ class MultiCloudVpnStack extends TerraformStack {
     // Create Azure Local Gateway(google)
     createAzureLocalGateways(this, azureProvider, googleAzureLocalGatewayParams);
       
-      //     /* VMInstances */
-      //     // AWS
-      //     const ec2InstancesParams = {
-      //       instanceConfigs: ec2Configs,
-      //       subnetIds: awsVpcResources.subnets.map(subnet => subnet.id),
-      //       securityGroupId: awsVpcResources.securityGroup.id,
-      //     };
-      //     createAwsEc2Instances(this, awsProvider, ec2InstancesParams);
+    /* VMInstances */
+    // AWS
+    const ec2InstancesParams = {
+      instanceConfigs: ec2Configs,
+      subnetIds: awsVpcResources.subnets.map(subnet => subnet.id),
+      securityGroupId: awsVpcResources.securityGroup.id,
+    };
+    createAwsEc2Instances(this, awsProvider, ec2InstancesParams);
 
-      //     // Google
-      //     createGoogleGceInstances(this, googleProvider, gceInstancesParams,googleVpcResources.vpc,googleVpcResources.subnets);
-      
-      //     // Azure
-      //     // ssh-key
-      //     const tlsProvider = new TlsProvider(this, "tls", {});
-      //     const sshKey = new PrivateKey(this, "ssh-key", {
-      //       algorithm: "RSA",
-      //       rsaBits: 4096,
-      //       provider: tlsProvider,
-      //     });
+    // Google
+    createGoogleGceInstances(this, googleProvider, gceInstancesParams,googleVpcResources.vpc,googleVpcResources.subnets);
 
-      //     new TerraformOutput(this, "ssh_private_key_output", {
-      //       value: sshKey.privateKeyPem,
-      //       sensitive: true,
-      //     });
+    // Azure
+    // ssh-key
+    const tlsProvider = new TlsProvider(this, "tls", {});
+    const sshKey = new PrivateKey(this, "ssh-key", {
+      algorithm: "RSA",
+      rsaBits: 4096,
+      provider: tlsProvider,
+    });
 
-      //     // Azure-VM
-      //     const azureVmParams = {
-      //       vnetName: azureVnetResources.vnet.name,
-      //       subnetNames: Object.fromEntries(
-      //         Object.entries(azureVnetResources.subnets).map(([key, subnet]) => [key, subnet.name])
-      //       ),
-      //       vmConfigs: azureVmsConfigparams,
-      //       sshKey:sshKey,
-      //     };
-      //     createAzureVms(this, azureProvider, azureVmParams);
+    new TerraformOutput(this, "ssh_private_key_output", {
+      value: sshKey.privateKeyPem,
+      sensitive: true,
+    });
+
+    // Azure-VM
+    const azureVmParams = {
+      vnetName: azureVnetResources.vnet.name,
+      subnetNames: Object.fromEntries(
+        Object.entries(azureVnetResources.subnets).map(([key, subnet]) => [key, subnet.name])
+      ),
+      vmConfigs: azureVmsConfigparams,
+      sshKey:sshKey,
+    };
+    createAzureVms(this, azureProvider, azureVmParams);
 
   }
 }
