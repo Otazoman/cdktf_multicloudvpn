@@ -1,10 +1,10 @@
-import { NetworkSecurityGroup } from "@cdktf/provider-azurerm/lib/network-security-group";
-import { NetworkSecurityRule } from "@cdktf/provider-azurerm/lib/network-security-rule";
-import { AzurermProvider } from "@cdktf/provider-azurerm/lib/provider";
-import { Subnet } from "@cdktf/provider-azurerm/lib/subnet";
-import { SubnetNetworkSecurityGroupAssociation } from "@cdktf/provider-azurerm/lib/subnet-network-security-group-association";
-import { VirtualNetwork } from "@cdktf/provider-azurerm/lib/virtual-network";
-import { Construct } from "constructs";
+import { NetworkSecurityGroup } from '@cdktf/provider-azurerm/lib/network-security-group';
+import { NetworkSecurityRule } from '@cdktf/provider-azurerm/lib/network-security-rule';
+import { AzurermProvider } from '@cdktf/provider-azurerm/lib/provider';
+import { Subnet } from '@cdktf/provider-azurerm/lib/subnet';
+import { SubnetNetworkSecurityGroupAssociation } from '@cdktf/provider-azurerm/lib/subnet-network-security-group-association';
+import { VirtualNetwork } from '@cdktf/provider-azurerm/lib/virtual-network';
+import { Construct } from 'constructs';
 
 interface SubnetConfig {
   name: string;

@@ -2,7 +2,7 @@ import { ComputeFirewall } from '@cdktf/provider-google/lib/compute-firewall';
 import { ComputeNetwork as GoogleVpc } from '@cdktf/provider-google/lib/compute-network';
 import { ComputeSubnetwork } from '@cdktf/provider-google/lib/compute-subnetwork';
 import { GoogleProvider } from '@cdktf/provider-google/lib/provider';
-import { Construct } from "constructs";
+import { Construct } from 'constructs';
 
 
 interface SubnetConfig {

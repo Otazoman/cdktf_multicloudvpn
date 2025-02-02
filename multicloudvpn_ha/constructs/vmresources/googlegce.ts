@@ -1,8 +1,8 @@
-import { ComputeInstance } from "@cdktf/provider-google/lib/compute-instance";
+import { ComputeInstance } from '@cdktf/provider-google/lib/compute-instance';
 import { ComputeNetwork as GoogleVpc } from '@cdktf/provider-google/lib/compute-network';
 import { ComputeSubnetwork } from '@cdktf/provider-google/lib/compute-subnetwork';
-import { GoogleProvider } from "@cdktf/provider-google/lib/provider";
-import { Construct } from "constructs";
+import { GoogleProvider } from '@cdktf/provider-google/lib/provider';
+import { Construct } from 'constructs';
 
 interface GceInstanceConfig {
   name: string;

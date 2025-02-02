@@ -619,7 +619,7 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
         "name": "GatewaySubnet",
         "provider": "azurerm",
         "resource_group_name": "rg_multicloud",
-        "virtual_network_name": "my-azure-vnet"
+        "virtual_network_name": "\${azurerm_virtual_network.azureVnet.name}"
       },
       "myAzureSubnet-subnet1": {
         "address_prefixes": [

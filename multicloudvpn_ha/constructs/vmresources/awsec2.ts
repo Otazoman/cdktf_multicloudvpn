@@ -1,6 +1,6 @@
-import { Instance } from "@cdktf/provider-aws/lib/instance";
-import { AwsProvider } from "@cdktf/provider-aws/lib/provider";
-import { Construct } from "constructs";
+import { Instance } from '@cdktf/provider-aws/lib/instance';
+import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
+import { Construct } from 'constructs';
 
 interface Ec2InstanceConfig {
   ami: string;

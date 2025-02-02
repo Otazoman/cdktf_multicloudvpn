@@ -1,7 +1,7 @@
-import { ComputeHaVpnGateway } from "@cdktf/provider-google/lib/compute-ha-vpn-gateway";
-import { ComputeRouter } from "@cdktf/provider-google/lib/compute-router";
-import { GoogleProvider } from "@cdktf/provider-google/lib/provider";
-import { Construct } from "constructs";
+import { ComputeHaVpnGateway } from '@cdktf/provider-google/lib/compute-ha-vpn-gateway';
+import { ComputeRouter } from '@cdktf/provider-google/lib/compute-router';
+import { GoogleProvider } from '@cdktf/provider-google/lib/provider';
+import { Construct } from 'constructs';
 
 interface GoogleVpnParams {
   vpcNetwork: string;

@@ -1,9 +1,9 @@
-import { ComputeExternalVpnGateway } from "@cdktf/provider-google/lib/compute-external-vpn-gateway";
-import { ComputeRouterInterface } from "@cdktf/provider-google/lib/compute-router-interface";
-import { ComputeRouterPeer } from "@cdktf/provider-google/lib/compute-router-peer";
-import { ComputeVpnTunnel } from "@cdktf/provider-google/lib/compute-vpn-tunnel";
-import { GoogleProvider } from "@cdktf/provider-google/lib/provider";
-import { Construct } from "constructs";
+import { ComputeExternalVpnGateway } from '@cdktf/provider-google/lib/compute-external-vpn-gateway';
+import { ComputeRouterInterface } from '@cdktf/provider-google/lib/compute-router-interface';
+import { ComputeRouterPeer } from '@cdktf/provider-google/lib/compute-router-peer';
+import { ComputeVpnTunnel } from '@cdktf/provider-google/lib/compute-vpn-tunnel';
+import { GoogleProvider } from '@cdktf/provider-google/lib/provider';
+import { Construct } from 'constructs';
 
 interface ExternalVpnGatewayParams {
   name: string;
@@ -41,7 +41,7 @@ export function createGooglePeerTunnel(scope: Construct, provider: GoogleProvide
   const externalVpnGateway = new ComputeExternalVpnGateway(scope, params.externalVpnGateway.name, {
     provider: provider,
     name: params.externalVpnGateway.name,
-    redundancyType: isAws ? "FOUR_IPS_REDUNDANCY" : "TWO_IPS_REDUNDANCY",
+    redundancyType: isAws ? 'FOUR_IPS_REDUNDANCY' : 'TWO_IPS_REDUNDANCY',
     interface: params.externalVpnGateway.interfaces.slice(0, tunnelCount).map((iface, index) => ({
       id: index,
       ipAddress: iface.ipAddress,

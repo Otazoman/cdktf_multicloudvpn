@@ -1,9 +1,9 @@
-import { DataAzurermSubnet } from "@cdktf/provider-azurerm/lib/data-azurerm-subnet";
-import { LinuxVirtualMachine } from "@cdktf/provider-azurerm/lib/linux-virtual-machine";
-import { NetworkInterface } from "@cdktf/provider-azurerm/lib/network-interface";
-import { AzurermProvider } from "@cdktf/provider-azurerm/lib/provider";
-import { PrivateKey } from "@cdktf/provider-tls/lib/private-key";
-import { Construct } from "constructs";
+import { DataAzurermSubnet } from '@cdktf/provider-azurerm/lib/data-azurerm-subnet';
+import { LinuxVirtualMachine } from '@cdktf/provider-azurerm/lib/linux-virtual-machine';
+import { NetworkInterface } from '@cdktf/provider-azurerm/lib/network-interface';
+import { AzurermProvider } from '@cdktf/provider-azurerm/lib/provider';
+import { PrivateKey } from '@cdktf/provider-tls/lib/private-key';
+import { Construct } from 'constructs';
 
 
 interface AzureVmConfig {
@@ -31,9 +31,7 @@ interface CreateAzureVmParams {
   sshKey: PrivateKey;
 }
 
-export function createAzureVms(scope: Construct, provider: AzurermProvider, params: CreateAzureVmParams) {
-
-  // Azure-VM
+export function createAzureVms(scope: Construct, provider: AzurermProvider, params: CreateAzureVmParams): LinuxVirtualMachine[] {
   const subnets = Object.entries(params.subnetNames).map(([key, value]) => 
     new DataAzurermSubnet(scope, `subnet-${key}`, {
       name: value,
@@ -42,21 +40,23 @@ export function createAzureVms(scope: Construct, provider: AzurermProvider, para
       provider: provider,
     })
   );
- 
+
+  const vms: LinuxVirtualMachine[] = [];
+
   params.vmConfigs.forEach((vmConfig, index) => {
     const nic = new NetworkInterface(scope, `nic-${index}`, {
       name: `${vmConfig.name}-nic`,
       location: vmConfig.location,
       resourceGroupName: vmConfig.resourceGroupName,
       ipConfiguration: [{
-        name: "internal",
+        name: 'internal',
         subnetId: subnets[index % subnets.length].id,
-        privateIpAddressAllocation: "Dynamic",
+        privateIpAddressAllocation: 'Dynamic',
       }],
       provider: provider,
     });
 
-    new LinuxVirtualMachine(scope, `vm-${index}`, {
+    const vm = new LinuxVirtualMachine(scope, `vm-${index}`, {
       name: vmConfig.name,
       resourceGroupName: vmConfig.resourceGroupName,
       location: vmConfig.location,
@@ -74,5 +74,9 @@ export function createAzureVms(scope: Construct, provider: AzurermProvider, para
       sourceImageReference: vmConfig.sourceImageReference,
       provider: provider,
     });
+
+    vms.push(vm);
   });
+
+  return vms;
 }

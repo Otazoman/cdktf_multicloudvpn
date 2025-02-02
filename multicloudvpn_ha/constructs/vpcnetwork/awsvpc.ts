@@ -1,9 +1,9 @@
-import { DefaultRouteTable } from "@cdktf/provider-aws/lib/default-route-table";
-import { AwsProvider } from "@cdktf/provider-aws/lib/provider";
-import { SecurityGroup } from "@cdktf/provider-aws/lib/security-group";
-import { Subnet } from "@cdktf/provider-aws/lib/subnet";
-import { Vpc as AwsVpc } from "@cdktf/provider-aws/lib/vpc";
-import { Construct } from "constructs";
+import { DefaultRouteTable } from '@cdktf/provider-aws/lib/default-route-table';
+import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
+import { SecurityGroup } from '@cdktf/provider-aws/lib/security-group';
+import { Subnet } from '@cdktf/provider-aws/lib/subnet';
+import { Vpc as AwsVpc } from '@cdktf/provider-aws/lib/vpc';
+import { Construct } from 'constructs';
 
 interface SubnetConfig {
     cidrBlock: string;
@@ -63,8 +63,8 @@ export function createAwsVpcResources(scope: Construct, provider: AwsProvider, p
     egress: [{
       fromPort: 0,
       toPort: 0,
-      protocol: "-1",
-      cidrBlocks: ["0.0.0.0/0"],
+      protocol: '-1',
+      cidrBlocks: ['0.0.0.0/0'],
     }],
     tags: {
       Name: params.securityGroupName,
