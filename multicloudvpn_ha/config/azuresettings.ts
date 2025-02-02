@@ -122,6 +122,47 @@ export const azureGoogleVpnparams = {
   presharedKey: 'test#01',
 }
 
+export const azureVpnGatewayParams = {
+  resourceGroupName: resourceGroup,
+  virtualNetworkName: vnetName,
+  VpnGatewayName: `${vnetName}-vng`,
+  gatewaySubnetCidr: azureVpnparams.gatewaySubnetCidr,
+  publicIpNames: azureVpnparams.publicIpNames,
+  location: azureCommonparams.location,
+  vpnProps: {
+    type: azureVpnparams.type,
+    vpnType: azureVpnparams.vpnType,
+    sku: azureVpnparams.sku,
+    azureAsn: azureVpnparams.azureAsn,
+    pipAlloc: azureVpnparams.pipAlloc,
+    awsGwIp1ip1: azureAwsVpnparams.awsGwIp1ip1,
+    awsGwIp1ip2: azureAwsVpnparams.awsGwIp1ip2,
+    awsGwIp2ip1: azureAwsVpnparams.awsGwIp2ip1,
+    awsGwIp2ip2: azureAwsVpnparams.awsGwIp2ip2,
+    googleGWip1: azureGoogleVpnparams.googleGwIp1,
+    googleGWip2: azureGoogleVpnparams.googleGwIp2,
+    googlePeerIp1: azureGoogleVpnparams.googlePeerIp1,
+    googlePeerIp2: azureGoogleVpnparams.googlePeerIp2,
+  },
+  diagnosticSettings: {
+    retentionInDays: azureVpnparams.retentionInDays
+  },
+}
+
+export const createLocalGatewayParams = (
+  virtualNetworkGatewayId: string,
+  conneectDestination:string,
+  tunnels: Array<any>,
+) => ({
+  resourceGroupName: azureCommonparams.resourceGroup,
+  location: azureCommonparams.location,
+  conneectDestination: conneectDestination,
+  virtualNetworkGatewayId: virtualNetworkGatewayId,
+  vpnConnectionType: azureVpnparams.vpnConnectionType,
+  tunnels: tunnels,
+ });
+
+
 /* AzureVM */
 export const azureVmsConfigparams = [
     {

@@ -10,6 +10,7 @@ import { Construct } from 'constructs';
 interface VpnGatewayParams {
   resourceGroupName: string;
   virtualNetworkName: string;
+  VpnGatewayName: string;
   gatewaySubnetCidr: string;
   publicIpNames: string[];
   location: string;
@@ -54,7 +55,7 @@ export function createAzureVpnGateway(scope: Construct, provider: AzurermProvide
   // Creating a virtual network gateway
   const vng = new VirtualNetworkGateway(scope, 'azure_vng', {
     provider: provider, 
-    name: `${params.virtualNetworkName}-vng`,
+    name: params.VpnGatewayName,
     resourceGroupName: params.resourceGroupName,
     location: params.location,
     type: params.vpnProps.type,

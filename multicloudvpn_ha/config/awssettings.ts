@@ -20,14 +20,24 @@ export const awsVpnparams = {
   bgpAwsAsn: 64512,
   logRetentionDays: 14,
 }
-export const awsGoogleVpnparams = {
-  conneectDestination: 'google',
-  type: 'ipsec.1',
-}
-export const awsAzureVpnparams = {
-  conneectDestination: 'azure',
-  type: 'ipsec.1',
-}
+
+export const createCustomerGatewayParams = (
+  conneectDestination: string,
+  bgpAsn: number,
+  vpnGatewayId: any,
+  haIpAddresses: string[]
+) => ({
+  customerGatewayName: `${awsVpcResourcesparams.vpcName}-aws-${conneectDestination}-cgw`,
+  vpnConnectionName: `${awsVpcResourcesparams.vpcName}-aws-${conneectDestination}-vpn-connection`,
+  conneectDestination: conneectDestination,
+  awsVpnCgwProps: {
+    bgpAsn: bgpAsn,
+    type: 'ipsec.1'
+  },
+  logRetentionDays: awsVpnparams.logRetentionDays,
+  vpnGatewayId: vpnGatewayId,
+  awsHaVpnGatewayIpAddresses: haIpAddresses
+});
 
 /* EC2 */
 export const ec2Configs = [

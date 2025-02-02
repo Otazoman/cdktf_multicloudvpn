@@ -36,6 +36,27 @@ export const googleAzureVpnParams = {
   ikeVersion:2
 }
 
+export const createGoogleVpnPeerParams = (
+  connectDestination: string,
+  tunnelCount: number,
+  ikeVersion: number,
+  routerName: string,
+  vpnGateway: any,
+  externalVpnGateway: any,
+  vpnConnections: any,
+) => ({
+  connectDestination:  connectDestination,
+  vpnTnnelname: `${vpcName}-gcp-${connectDestination}-vpn-tunnel`,
+  routerInterfaceName: `${vpcName}-gcp-${connectDestination}-router-interface`,
+  routerPeerName: `${vpcName}-gcp-${connectDestination}-router-peer`,
+  tunnelCount :tunnelCount,
+  ikeVersion :ikeVersion,
+  routerName : routerName,
+  vpnGateway: vpnGateway,
+  externalVpnGateway: externalVpnGateway,
+  vpnConnections: vpnConnections,
+});
+
 
 
 /* GCE */

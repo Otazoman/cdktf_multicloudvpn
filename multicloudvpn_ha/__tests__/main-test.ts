@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import { App, Testing } from "cdktf";
 import "cdktf/lib/testing/adapters/jest";
-import { MultiCloudVpnStack } from "../main";
+import { MultiCloudVpnStack } from "../stacks/MultiCloudVpnStack";
+
 
 describe("MultiCloudVpnStack", () => {
     let app: App;
@@ -18,7 +19,6 @@ describe("MultiCloudVpnStack", () => {
         expect(synth).toMatchSnapshot();
     });
 });
-
 
 
 // describe("My CDKTF Application", () => {
