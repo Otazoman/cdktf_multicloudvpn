@@ -1,10 +1,9 @@
-import { DataAzurermSubnet } from '@cdktf/provider-azurerm/lib/data-azurerm-subnet';
-import { LinuxVirtualMachine } from '@cdktf/provider-azurerm/lib/linux-virtual-machine';
-import { NetworkInterface } from '@cdktf/provider-azurerm/lib/network-interface';
-import { AzurermProvider } from '@cdktf/provider-azurerm/lib/provider';
-import { PrivateKey } from '@cdktf/provider-tls/lib/private-key';
-import { Construct } from 'constructs';
-
+import { DataAzurermSubnet } from "@cdktf/provider-azurerm/lib/data-azurerm-subnet";
+import { LinuxVirtualMachine } from "@cdktf/provider-azurerm/lib/linux-virtual-machine";
+import { NetworkInterface } from "@cdktf/provider-azurerm/lib/network-interface";
+import { AzurermProvider } from "@cdktf/provider-azurerm/lib/provider";
+import { PrivateKey } from "@cdktf/provider-tls/lib/private-key";
+import { Construct } from "constructs";
 
 interface AzureVmConfig {
   name: string;
@@ -31,14 +30,19 @@ interface CreateAzureVmParams {
   sshKey: PrivateKey;
 }
 
-export function createAzureVms(scope: Construct, provider: AzurermProvider, params: CreateAzureVmParams): LinuxVirtualMachine[] {
-  const subnets = Object.entries(params.subnetNames).map(([key, value]) => 
-    new DataAzurermSubnet(scope, `subnet-${key}`, {
-      name: value,
-      virtualNetworkName: params.vnetName,
-      resourceGroupName: params.vmConfigs[0].resourceGroupName,
-      provider: provider,
-    })
+export function createAzureVms(
+  scope: Construct,
+  provider: AzurermProvider,
+  params: CreateAzureVmParams
+): LinuxVirtualMachine[] {
+  const subnets = Object.entries(params.subnetNames).map(
+    ([key, value]) =>
+      new DataAzurermSubnet(scope, `subnet-${key}`, {
+        name: value,
+        virtualNetworkName: params.vnetName,
+        resourceGroupName: params.vmConfigs[0].resourceGroupName,
+        provider: provider,
+      })
   );
 
   const vms: LinuxVirtualMachine[] = [];
@@ -48,11 +52,13 @@ export function createAzureVms(scope: Construct, provider: AzurermProvider, para
       name: `${vmConfig.name}-nic`,
       location: vmConfig.location,
       resourceGroupName: vmConfig.resourceGroupName,
-      ipConfiguration: [{
-        name: 'internal',
-        subnetId: subnets[index % subnets.length].id,
-        privateIpAddressAllocation: 'Dynamic',
-      }],
+      ipConfiguration: [
+        {
+          name: "internal",
+          subnetId: subnets[index % subnets.length].id,
+          privateIpAddressAllocation: "Dynamic",
+        },
+      ],
       provider: provider,
     });
 
@@ -63,10 +69,12 @@ export function createAzureVms(scope: Construct, provider: AzurermProvider, para
       size: vmConfig.size,
       adminUsername: vmConfig.adminUsername,
       networkInterfaceIds: [nic.id],
-      adminSshKey: [{
-        username: vmConfig.adminUsername,
-        publicKey: params.sshKey.publicKeyOpenssh,
-      }],
+      adminSshKey: [
+        {
+          username: vmConfig.adminUsername,
+          publicKey: params.sshKey.publicKeyOpenssh,
+        },
+      ],
       osDisk: {
         caching: vmConfig.osDisk.caching,
         storageAccountType: vmConfig.osDisk.storageAccountType,

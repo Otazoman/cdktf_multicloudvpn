@@ -1,20 +1,20 @@
-import { DefaultRouteTable } from '@cdktf/provider-aws/lib/default-route-table';
-import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
-import { SecurityGroup } from '@cdktf/provider-aws/lib/security-group';
-import { Subnet } from '@cdktf/provider-aws/lib/subnet';
-import { Vpc as AwsVpc } from '@cdktf/provider-aws/lib/vpc';
-import { Construct } from 'constructs';
+import { DefaultRouteTable } from "@cdktf/provider-aws/lib/default-route-table";
+import { AwsProvider } from "@cdktf/provider-aws/lib/provider";
+import { SecurityGroup } from "@cdktf/provider-aws/lib/security-group";
+import { Subnet } from "@cdktf/provider-aws/lib/subnet";
+import { Vpc as AwsVpc } from "@cdktf/provider-aws/lib/vpc";
+import { Construct } from "constructs";
 
 interface SubnetConfig {
-    cidrBlock: string;
-    az: string;
-    name: string;
+  cidrBlock: string;
+  az: string;
+  name: string;
 }
 
 interface AwsResourcesParams {
   vpcCidrBlock: string;
   vpcName: string;
-  subnets: SubnetConfig[]; 
+  subnets: SubnetConfig[];
   securityGroupName: string;
   allowedPorts: number[];
   ingressCidrBlocks: string[];
@@ -23,11 +23,14 @@ interface AwsResourcesParams {
   defaultRouteTableName: string;
 }
 
-
-export function createAwsVpcResources(scope: Construct, provider: AwsProvider, params: AwsResourcesParams) {
+export function createAwsVpcResources(
+  scope: Construct,
+  provider: AwsProvider,
+  params: AwsResourcesParams
+) {
   // vpc
-  const vpc = new AwsVpc(scope, 'awsVpc', {
-    provider: provider, 
+  const vpc = new AwsVpc(scope, "awsVpc", {
+    provider: provider,
     cidrBlock: params.vpcCidrBlock,
     enableDnsHostnames: true,
     enableDnsSupport: true,
@@ -38,7 +41,7 @@ export function createAwsVpcResources(scope: Construct, provider: AwsProvider, p
 
   // subnets
   const subnets = params.subnets.map((subnetConfig, index) => {
-     return new Subnet(scope, `awsSubnet${index}`, {
+    return new Subnet(scope, `awsSubnet${index}`, {
       provider: provider,
       vpcId: vpc.id,
       cidrBlock: subnetConfig.cidrBlock,
@@ -48,31 +51,33 @@ export function createAwsVpcResources(scope: Construct, provider: AwsProvider, p
       },
     });
   });
-    
+
   // securitygroup
-  const securityGroup = new SecurityGroup(scope, 'awsSecurityGroup', {
-    provider: provider, 
+  const securityGroup = new SecurityGroup(scope, "awsSecurityGroup", {
+    provider: provider,
     vpcId: vpc.id,
-    ingress: params.allowedPorts.map(port => ({
+    ingress: params.allowedPorts.map((port) => ({
       fromPort: port,
       toPort: port,
       protocol: params.allowprotocol,
       cidrBlocks: params.ingressCidrBlocks,
       description: params.description,
     })),
-    egress: [{
-      fromPort: 0,
-      toPort: 0,
-      protocol: '-1',
-      cidrBlocks: ['0.0.0.0/0'],
-    }],
+    egress: [
+      {
+        fromPort: 0,
+        toPort: 0,
+        protocol: "-1",
+        cidrBlocks: ["0.0.0.0/0"],
+      },
+    ],
     tags: {
       Name: params.securityGroupName,
     },
   });
-  
+
   // routetable
-  new DefaultRouteTable(scope, 'defaultRouteTable', {
+  new DefaultRouteTable(scope, "defaultRouteTable", {
     provider: provider,
     defaultRouteTableId: vpc.defaultRouteTableId,
     tags: {
@@ -80,5 +85,5 @@ export function createAwsVpcResources(scope: Construct, provider: AwsProvider, p
     },
   });
 
-  return { vpc , subnets , securityGroup };
+  return { vpc, subnets, securityGroup };
 }

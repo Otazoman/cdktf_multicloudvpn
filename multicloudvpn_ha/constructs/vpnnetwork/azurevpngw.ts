@@ -1,11 +1,11 @@
-import { DataAzurermPublicIp } from '@cdktf/provider-azurerm/lib/data-azurerm-public-ip';
-import { LogAnalyticsWorkspace } from '@cdktf/provider-azurerm/lib/log-analytics-workspace';
-import { MonitorDiagnosticSetting } from '@cdktf/provider-azurerm/lib/monitor-diagnostic-setting';
-import { AzurermProvider } from '@cdktf/provider-azurerm/lib/provider';
-import { PublicIp } from '@cdktf/provider-azurerm/lib/public-ip';
-import { Subnet } from '@cdktf/provider-azurerm/lib/subnet';
-import { VirtualNetworkGateway } from '@cdktf/provider-azurerm/lib/virtual-network-gateway';
-import { Construct } from 'constructs';
+import { DataAzurermPublicIp } from "@cdktf/provider-azurerm/lib/data-azurerm-public-ip";
+import { LogAnalyticsWorkspace } from "@cdktf/provider-azurerm/lib/log-analytics-workspace";
+import { MonitorDiagnosticSetting } from "@cdktf/provider-azurerm/lib/monitor-diagnostic-setting";
+import { AzurermProvider } from "@cdktf/provider-azurerm/lib/provider";
+import { PublicIp } from "@cdktf/provider-azurerm/lib/public-ip";
+import { Subnet } from "@cdktf/provider-azurerm/lib/subnet";
+import { VirtualNetworkGateway } from "@cdktf/provider-azurerm/lib/virtual-network-gateway";
+import { Construct } from "constructs";
 
 interface VpnGatewayParams {
   resourceGroupName: string;
@@ -32,29 +32,35 @@ interface VpnGatewayParams {
   };
 }
 
-export function createAzureVpnGateway(scope: Construct, provider: AzurermProvider, params: VpnGatewayParams) {
-
+export function createAzureVpnGateway(
+  scope: Construct,
+  provider: AzurermProvider,
+  params: VpnGatewayParams
+) {
   // Create Gateway Subnet
-  const gatewaySubnet = new Subnet(scope, 'azure_gatewaySubnet', {
-    provider: provider, 
+  const gatewaySubnet = new Subnet(scope, "azure_gatewaySubnet", {
+    provider: provider,
     resourceGroupName: params.resourceGroupName,
     virtualNetworkName: params.virtualNetworkName,
-    name: 'GatewaySubnet',
+    name: "GatewaySubnet",
     addressPrefixes: [params.gatewaySubnetCidr],
   });
 
   // Creation of Public IP
-  const publicIps = params.publicIpNames.map(name => new PublicIp(scope, `azure_gw_public_ips_${name}`, {
-    provider: provider, 
-    name,
-    resourceGroupName: params.resourceGroupName,
-    location: params.location,
-    allocationMethod: 'Static',
-  }));
+  const publicIps = params.publicIpNames.map(
+    (name) =>
+      new PublicIp(scope, `azure_gw_public_ips_${name}`, {
+        provider: provider,
+        name,
+        resourceGroupName: params.resourceGroupName,
+        location: params.location,
+        allocationMethod: "Static",
+      })
+  );
 
   // Creating a virtual network gateway
-  const vng = new VirtualNetworkGateway(scope, 'azure_vng', {
-    provider: provider, 
+  const vng = new VirtualNetworkGateway(scope, "azure_vng", {
+    provider: provider,
     name: params.VpnGatewayName,
     resourceGroupName: params.resourceGroupName,
     location: params.location,
@@ -67,7 +73,7 @@ export function createAzureVpnGateway(scope: Construct, provider: AzurermProvide
       asn: params.vpnProps.azureAsn,
       peeringAddresses: [
         {
-          ipConfigurationName: 'vnetGatewayConfig-1',
+          ipConfigurationName: "vnetGatewayConfig-1",
           apipaAddresses: [
             params.vpnProps.awsGwIp1ip1,
             params.vpnProps.awsGwIp1ip2,
@@ -75,7 +81,7 @@ export function createAzureVpnGateway(scope: Construct, provider: AzurermProvide
           ],
         },
         {
-          ipConfigurationName: 'vnetGatewayConfig-2',
+          ipConfigurationName: "vnetGatewayConfig-2",
           apipaAddresses: [
             params.vpnProps.awsGwIp2ip1,
             params.vpnProps.awsGwIp2ip2,
@@ -86,13 +92,13 @@ export function createAzureVpnGateway(scope: Construct, provider: AzurermProvide
     },
     ipConfiguration: [
       {
-        name: 'vnetGatewayConfig-1',
+        name: "vnetGatewayConfig-1",
         publicIpAddressId: publicIps[0].id,
         privateIpAddressAllocation: params.vpnProps.pipAlloc,
         subnetId: gatewaySubnet.id,
       },
       {
-        name: 'vnetGatewayConfig-2',
+        name: "vnetGatewayConfig-2",
         publicIpAddressId: publicIps[1].id,
         privateIpAddressAllocation: params.vpnProps.pipAlloc,
         subnetId: gatewaySubnet.id,
@@ -101,48 +107,59 @@ export function createAzureVpnGateway(scope: Construct, provider: AzurermProvide
   });
 
   // Public IP data acquisition (must wait for Azure creation to be completed before handing over)
-  const publicIpData = params.publicIpNames.map(name => new DataAzurermPublicIp(scope, `pip_vgw_${name}`, {
-    name,
-    resourceGroupName: params.resourceGroupName,
-    dependsOn: [vng],
-  }));
+  const publicIpData = params.publicIpNames.map(
+    (name) =>
+      new DataAzurermPublicIp(scope, `pip_vgw_${name}`, {
+        name,
+        resourceGroupName: params.resourceGroupName,
+        dependsOn: [vng],
+      })
+  );
 
   // Create Log Analytics Workspace
-  const logAnalyticsWorkspace = new LogAnalyticsWorkspace(scope, 'azure_log_analytics_workspace', {
-    provider: provider,
-    name: `${vng.name}-loganalytics`,
-    location: params.location,
-    resourceGroupName: params.resourceGroupName,
-    retentionInDays: params.diagnosticSettings.retentionInDays,
-  });
+  const logAnalyticsWorkspace = new LogAnalyticsWorkspace(
+    scope,
+    "azure_log_analytics_workspace",
+    {
+      provider: provider,
+      name: `${vng.name}-loganalytics`,
+      location: params.location,
+      resourceGroupName: params.resourceGroupName,
+      retentionInDays: params.diagnosticSettings.retentionInDays,
+    }
+  );
 
   // Create Diagnostic Setting
-  const diagnosticSetting = new MonitorDiagnosticSetting(scope, 'azure_vng_diagnostic_setting', {
-    provider: provider,
-    name: `${vng.name}-diagnostic-setting`,
-    targetResourceId: vng.id,
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.id,
-    enabledLog: [
-      {
-        category: 'GatewayDiagnosticLog',
-      },
-      {
-        category: 'TunnelDiagnosticLog',
-      },
-      {
-        category: 'RouteDiagnosticLog',
-      },
-      {
-        category: 'IKEDiagnosticLog',
-      },
-    ],
-    metric: [
-      {
-        category: 'AllMetrics',
-        enabled: true,
-      },
-    ],
-  });
+  const diagnosticSetting = new MonitorDiagnosticSetting(
+    scope,
+    "azure_vng_diagnostic_setting",
+    {
+      provider: provider,
+      name: `${vng.name}-diagnostic-setting`,
+      targetResourceId: vng.id,
+      logAnalyticsWorkspaceId: logAnalyticsWorkspace.id,
+      enabledLog: [
+        {
+          category: "GatewayDiagnosticLog",
+        },
+        {
+          category: "TunnelDiagnosticLog",
+        },
+        {
+          category: "RouteDiagnosticLog",
+        },
+        {
+          category: "IKEDiagnosticLog",
+        },
+      ],
+      metric: [
+        {
+          category: "AllMetrics",
+          enabled: true,
+        },
+      ],
+    }
+  );
 
   return { publicIpData, virtualNetworkGateway: vng, diagnosticSetting };
 }
