@@ -44,11 +44,11 @@ npm install @cdktf/provider-tls
 
 Volume of compose.yaml - ./app:/app in place of ./workdir:/app and replace it with
 
-'''
+```
 npm install
 cdktf plan
 cdktf deploy
-'''
+```
 
 If you want to delete a resource
 
