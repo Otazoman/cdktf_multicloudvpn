@@ -20,12 +20,12 @@ interface VpnGatewayParams {
     sku: string;
     azureAsn: number;
     pipAlloc: string;
-    awsGwIp1ip1: string;
-    awsGwIp1ip2: string;
-    awsGwIp2ip1: string;
-    awsGwIp2ip2: string;
-    googleGWip1: string;
-    googleGWip2: string;
+    awsGwIp1ip1?: string;
+    awsGwIp1ip2?: string;
+    awsGwIp2ip1?: string;
+    awsGwIp2ip2?: string;
+    googleGWip1?: string;
+    googleGWip2?: string;
   };
   diagnosticSettings: {
     retentionInDays: number;
@@ -78,7 +78,7 @@ export function createAzureVpnGateway(
             params.vpnProps.awsGwIp1ip1,
             params.vpnProps.awsGwIp1ip2,
             params.vpnProps.googleGWip1,
-          ],
+          ].filter((ip): ip is string => ip !== undefined),
         },
         {
           ipConfigurationName: "vnetGatewayConfig-2",
@@ -86,7 +86,7 @@ export function createAzureVpnGateway(
             params.vpnProps.awsGwIp2ip1,
             params.vpnProps.awsGwIp2ip2,
             params.vpnProps.googleGWip2,
-          ],
+          ].filter((ip): ip is string => ip !== undefined),
         },
       ],
     },

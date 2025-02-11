@@ -175,6 +175,30 @@ export function createVpnResources(
 
   if (awsToAzure || googleToAzure) {
     // Azure VPN Gateway
+    const vpnProps: any = {
+      type: azureVpnparams.type,
+      vpnType: azureVpnparams.vpnType,
+      sku: azureVpnparams.sku,
+      azureAsn: azureVpnparams.azureAsn,
+      pipAlloc: azureVpnparams.pipAlloc,
+    };
+
+    if (awsToAzure) {
+      // AWS
+      vpnProps.awsGwIp1ip1 = azureAwsVpnparams.awsGwIp1ip1;
+      vpnProps.awsGwIp1ip2 = azureAwsVpnparams.awsGwIp1ip2;
+      vpnProps.awsGwIp2ip1 = azureAwsVpnparams.awsGwIp2ip1;
+      vpnProps.awsGwIp2ip2 = azureAwsVpnparams.awsGwIp2ip2;
+    }
+
+    if (googleToAzure) {
+      // Google
+      vpnProps.googleGWip1 = azureGoogleVpnparams.googleGwIp1;
+      vpnProps.googleGWip2 = azureGoogleVpnparams.googleGwIp2;
+      vpnProps.googlePeerIp1 = azureGoogleVpnparams.googlePeerIp1;
+      vpnProps.googlePeerIp2 = azureGoogleVpnparams.googlePeerIp2;
+    }
+
     const azureVpnGatewayResourceparams = {
       resourceGroupName: azureCommonparams.resourceGroup,
       virtualNetworkName: azureVnetResources.vnet.name,
@@ -182,21 +206,7 @@ export function createVpnResources(
       gatewaySubnetCidr: azureVpnparams.gatewaySubnetCidr,
       publicIpNames: azureVpnparams.publicIpNames,
       location: azureCommonparams.location,
-      vpnProps: {
-        type: azureVpnparams.type,
-        vpnType: azureVpnparams.vpnType,
-        sku: azureVpnparams.sku,
-        azureAsn: azureVpnparams.azureAsn,
-        pipAlloc: azureVpnparams.pipAlloc,
-        awsGwIp1ip1: azureAwsVpnparams.awsGwIp1ip1,
-        awsGwIp1ip2: azureAwsVpnparams.awsGwIp1ip2,
-        awsGwIp2ip1: azureAwsVpnparams.awsGwIp2ip1,
-        awsGwIp2ip2: azureAwsVpnparams.awsGwIp2ip2,
-        googleGWip1: azureGoogleVpnparams.googleGwIp1,
-        googleGWip2: azureGoogleVpnparams.googleGwIp2,
-        googlePeerIp1: azureGoogleVpnparams.googlePeerIp1,
-        googlePeerIp2: azureGoogleVpnparams.googlePeerIp2,
-      },
+      vpnProps: vpnProps,
       diagnosticSettings: {
         retentionInDays: azureVpnparams.retentionInDays,
       },

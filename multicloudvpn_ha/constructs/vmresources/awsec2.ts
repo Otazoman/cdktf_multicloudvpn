@@ -9,12 +9,12 @@ interface Ec2InstanceConfig {
   tags: {
     Name: string;
   };
+  securityGroupIds: string[];
 }
 
 interface CreateEc2InstancesParams {
   instanceConfigs: Ec2InstanceConfig[];
   subnetIds: string[];
-  securityGroupId: string;
 }
 
 export function createAwsEc2Instances(
@@ -29,7 +29,7 @@ export function createAwsEc2Instances(
       instanceType: config.instanceType,
       keyName: config.keyName,
       subnetId: params.subnetIds[index % params.subnetIds.length],
-      vpcSecurityGroupIds: [params.securityGroupId],
+      vpcSecurityGroupIds: config.securityGroupIds,
       tags: config.tags,
     });
   });

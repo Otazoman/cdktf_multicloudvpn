@@ -17,7 +17,8 @@ import { createGoogleGceInstances } from "../constructs/vmresources/googlegce";
 // Define interfaces for the VPC resources
 interface AwsVpcResources {
   subnets: { id: string }[];
-  securityGroup: { id: string };
+  //securityGroup: { id: string };
+  securityGroups: { name: string; id: string }[];
 }
 
 interface AzureVnetResources {
@@ -38,11 +39,20 @@ export const createVmResources = (
 ) => {
   if ((awsToAzure || awsToGoogle) && ec2Building) {
     // AWS EC2 Instances
+    const securityGroupMapping = Object.fromEntries(
+      awsVpcResources.securityGroups.map((sg) => [sg.name, sg.id])
+    );
+
     const awsEc2Instances = createAwsEc2Instances(scope, awsProvider, {
-      instanceConfigs: ec2Configs,
+      instanceConfigs: ec2Configs.map((config) => ({
+        ...config,
+        securityGroupIds: config.securityGroupNames.map(
+          (name) => securityGroupMapping[name]
+        ),
+      })),
       subnetIds: awsVpcResources.subnets.map((subnet) => subnet.id),
-      securityGroupId: awsVpcResources.securityGroup.id,
     });
+
     awsEc2Instances.forEach((instance) =>
       instance.node.addDependency(vpnResources.awsVpnGateway)
     );

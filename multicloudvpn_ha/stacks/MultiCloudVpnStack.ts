@@ -30,8 +30,6 @@ export class MultiCloudVpnStack extends TerraformStack {
       azureProvider
     );
 
-    console.log(vpcResources);
-
     // VPN
     const vpnResources = createVpnResources(
       this,

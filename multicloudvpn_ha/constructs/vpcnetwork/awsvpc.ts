@@ -1,4 +1,5 @@
 import { DefaultRouteTable } from "@cdktf/provider-aws/lib/default-route-table";
+import { Ec2InstanceConnectEndpoint } from "@cdktf/provider-aws/lib/ec2-instance-connect-endpoint";
 import { AwsProvider } from "@cdktf/provider-aws/lib/provider";
 import { SecurityGroup } from "@cdktf/provider-aws/lib/security-group";
 import { Subnet } from "@cdktf/provider-aws/lib/subnet";
@@ -11,16 +12,33 @@ interface SubnetConfig {
   name: string;
 }
 
+interface SecurityGroupRule {
+  fromPort: number;
+  toPort: number;
+  protocol: string;
+  cidrBlocks: string[];
+  ipv6CidrBlocks?: string[];
+  description?: string;
+}
+
+interface SecurityGroupConfig {
+  name: string;
+  ingress: SecurityGroupRule[];
+  egress: SecurityGroupRule[];
+}
+
+interface ec2InstanceConnectEndpointsConfig {
+  endpointName: string;
+  securityGroupNames: string[];
+}
+
 interface AwsResourcesParams {
   vpcCidrBlock: string;
   vpcName: string;
   subnets: SubnetConfig[];
-  securityGroupName: string;
-  allowedPorts: number[];
-  ingressCidrBlocks: string[];
-  allowprotocol: string;
-  description: string;
+  securityGroups: SecurityGroupConfig[];
   defaultRouteTableName: string;
+  ec2ICEndpoint: ec2InstanceConnectEndpointsConfig;
 }
 
 export function createAwsVpcResources(
@@ -52,28 +70,33 @@ export function createAwsVpcResources(
     });
   });
 
-  // securitygroup
-  const securityGroup = new SecurityGroup(scope, "awsSecurityGroup", {
-    provider: provider,
-    vpcId: vpc.id,
-    ingress: params.allowedPorts.map((port) => ({
-      fromPort: port,
-      toPort: port,
-      protocol: params.allowprotocol,
-      cidrBlocks: params.ingressCidrBlocks,
-      description: params.description,
-    })),
-    egress: [
-      {
-        fromPort: 0,
-        toPort: 0,
-        protocol: "-1",
-        cidrBlocks: ["0.0.0.0/0"],
+  // security groups
+  const securityGroups = params.securityGroups.map((sgConfig, index) => {
+    const sg = new SecurityGroup(scope, `awsSecurityGroup${index}`, {
+      provider: provider,
+      vpcId: vpc.id,
+      name: sgConfig.name,
+      ingress: sgConfig.ingress.map((rule) => ({
+        fromPort: rule.fromPort,
+        toPort: rule.toPort,
+        protocol: rule.protocol,
+        cidrBlocks: rule.cidrBlocks,
+        ipv6CidrBlocks: rule.ipv6CidrBlocks,
+        description: rule.description,
+      })),
+      egress: sgConfig.egress.map((rule) => ({
+        fromPort: rule.fromPort,
+        toPort: rule.toPort,
+        protocol: rule.protocol,
+        cidrBlocks: rule.cidrBlocks,
+        ipv6CidrBlocks: rule.ipv6CidrBlocks,
+        description: rule.description,
+      })),
+      tags: {
+        Name: sgConfig.name,
       },
-    ],
-    tags: {
-      Name: params.securityGroupName,
-    },
+    });
+    return sg;
   });
 
   // routetable
@@ -85,5 +108,33 @@ export function createAwsVpcResources(
     },
   });
 
-  return { vpc, subnets, securityGroup };
+  // EC2 Instance Connect Endpoint
+  const firstSubnet = subnets[0];
+
+  const securityGroupMapping = Object.fromEntries(
+    securityGroups.map((sg) => [sg.tags?.Name, sg.id])
+  );
+  const securityGroupIds = params.ec2ICEndpoint.securityGroupNames.map(
+    (name) => securityGroupMapping[name]
+  );
+
+  const ec2InstanceConnectEndpoint = new Ec2InstanceConnectEndpoint(
+    scope,
+    "ec2InstanceConnectEndpoint",
+    {
+      provider: provider,
+      subnetId: firstSubnet.id,
+      securityGroupIds: securityGroupIds,
+      tags: {
+        Name: params.ec2ICEndpoint.endpointName,
+      },
+    }
+  );
+
+  return {
+    vpc,
+    subnets,
+    securityGroups,
+    ec2InstanceConnectEndpoint,
+  };
 }

@@ -2,38 +2,6 @@
 
 exports[`MultiCloudVpnStack Snapshot test 1`] = `
 "{
-  "data": {
-    "azurerm_public_ip": {
-      "pip_vgw_vpn-gateway-ip-1": {
-        "depends_on": [
-          "azurerm_virtual_network_gateway.azure_vng"
-        ],
-        "name": "vpn-gateway-ip-1",
-        "resource_group_name": "rg_multicloud"
-      },
-      "pip_vgw_vpn-gateway-ip-2": {
-        "depends_on": [
-          "azurerm_virtual_network_gateway.azure_vng"
-        ],
-        "name": "vpn-gateway-ip-2",
-        "resource_group_name": "rg_multicloud"
-      }
-    },
-    "azurerm_subnet": {
-      "subnet-subnet1": {
-        "name": "\${azurerm_subnet.myAzureSubnet-subnet1.name}",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "virtual_network_name": "\${azurerm_virtual_network.azureVnet.name}"
-      },
-      "subnet-subnet2": {
-        "name": "\${azurerm_subnet.myAzureSubnet-subnet2.name}",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "virtual_network_name": "\${azurerm_virtual_network.azureVnet.name}"
-      }
-    }
-  },
   "output": {
     "ssh_private_key_output": {
       "sensitive": true,
@@ -67,11 +35,6 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
   },
   "resource": {
     "aws_cloudwatch_log_group": {
-      "my-aws-vpc-aws-azure-cgw-log-group": {
-        "name": "my-aws-vpc-aws-azure-cgw-log-group",
-        "provider": "aws",
-        "retention_in_days": 14
-      },
       "my-aws-vpc-aws-google-cgw-log-group": {
         "name": "my-aws-vpc-aws-google-cgw-log-group",
         "provider": "aws",
@@ -79,24 +42,6 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
       }
     },
     "aws_customer_gateway": {
-      "aws_azure_cgw_0": {
-        "bgp_asn": "65515",
-        "ip_address": "\${data.azurerm_public_ip.pip_vgw_vpn-gateway-ip-1.ip_address}",
-        "provider": "aws",
-        "tags": {
-          "Name": "my-aws-vpc-aws-azure-cgw-1"
-        },
-        "type": "ipsec.1"
-      },
-      "aws_azure_cgw_1": {
-        "bgp_asn": "65515",
-        "ip_address": "\${data.azurerm_public_ip.pip_vgw_vpn-gateway-ip-2.ip_address}",
-        "provider": "aws",
-        "tags": {
-          "Name": "my-aws-vpc-aws-azure-cgw-2"
-        },
-        "type": "ipsec.1"
-      },
       "aws_google_cgw_0": {
         "bgp_asn": "65000",
         "ip_address": "\${google_compute_ha_vpn_gateway.aws_gcp_ha_vpn.vpn_interfaces[0].ip_address}",
@@ -125,6 +70,35 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
         }
       }
     },
+    "aws_ec2_instance_connect_endpoint": {
+      "ec2InstanceConnectEndpoint0": {
+        "provider": "aws",
+        "security_group_ids": [
+        ],
+        "subnet_id": "\${aws_subnet.awsSubnet0.id}",
+        "tags": {
+          "Name": "undefined-ConnectEndpoint"
+        }
+      },
+      "ec2InstanceConnectEndpoint1": {
+        "provider": "aws",
+        "security_group_ids": [
+        ],
+        "subnet_id": "\${aws_subnet.awsSubnet1.id}",
+        "tags": {
+          "Name": "undefined-ConnectEndpoint"
+        }
+      },
+      "ec2InstanceConnectEndpoint2": {
+        "provider": "aws",
+        "security_group_ids": [
+        ],
+        "subnet_id": "\${aws_subnet.awsSubnet2.id}",
+        "tags": {
+          "Name": "undefined-ConnectEndpoint"
+        }
+      }
+    },
     "aws_instance": {
       "ec2Instance0": {
         "ami": "ami-0b20f552f63953f0e",
@@ -136,20 +110,21 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
           "Name": "MyEC2Instance1"
         },
         "vpc_security_group_ids": [
-          "\${aws_security_group.awsSecurityGroup.id}"
         ]
       }
     },
     "aws_security_group": {
-      "awsSecurityGroup": {
+      "awsSecurityGroup0": {
         "egress": [
           {
             "cidr_blocks": [
               "0.0.0.0/0"
             ],
-            "description": null,
+            "description": "Allow all outbound traffic",
             "from_port": 0,
-            "ipv6_cidr_blocks": null,
+            "ipv6_cidr_blocks": [
+              "::/0"
+            ],
             "prefix_list_ids": null,
             "protocol": "-1",
             "security_groups": null,
@@ -164,7 +139,7 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
               "10.1.0.0/16",
               "10.2.0.0/16"
             ],
-            "description": "Other Cloud allow",
+            "description": "Allow all inbound traffic",
             "from_port": 0,
             "ipv6_cidr_blocks": null,
             "prefix_list_ids": null,
@@ -176,7 +151,46 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
         ],
         "provider": "aws",
         "tags": {
-          "Name": "my-aws-vpc-sg"
+          "Name": "my-aws-vpc-sg1"
+        },
+        "vpc_id": "\${aws_vpc.awsVpc.id}"
+      },
+      "awsSecurityGroup1": {
+        "egress": [
+          {
+            "cidr_blocks": [
+              "0.0.0.0/0"
+            ],
+            "description": "Allow all outbound traffic",
+            "from_port": 0,
+            "ipv6_cidr_blocks": [
+              "::/0"
+            ],
+            "prefix_list_ids": null,
+            "protocol": "-1",
+            "security_groups": null,
+            "self": null,
+            "to_port": 0
+          }
+        ],
+        "ingress": [
+          {
+            "cidr_blocks": [
+              "150.9.94.35/32"
+            ],
+            "description": "EC2 Instance Connect",
+            "from_port": 22,
+            "ipv6_cidr_blocks": null,
+            "prefix_list_ids": null,
+            "protocol": "tcp",
+            "security_groups": null,
+            "self": null,
+            "to_port": 22
+          }
+        ],
+        "provider": "aws",
+        "tags": {
+          "Name": "EC2InstanceConnect"
         },
         "vpc_id": "\${aws_vpc.awsVpc.id}"
       }
@@ -222,58 +236,6 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
       }
     },
     "aws_vpn_connection": {
-      "aws_azure_vpn_connection_0": {
-        "customer_gateway_id": "\${aws_customer_gateway.aws_azure_cgw_0.id}",
-        "provider": "aws",
-        "static_routes_only": false,
-        "tags": {
-          "Name": "my-aws-vpc-aws-azure-vpn-connection-1"
-        },
-        "tunnel1_inside_cidr": "169.254.21.0/30",
-        "tunnel1_log_options": {
-          "cloudwatch_log_options": {
-            "log_enabled": true,
-            "log_group_arn": "\${aws_cloudwatch_log_group.my-aws-vpc-aws-azure-cgw-log-group.arn}",
-            "log_output_format": "text"
-          }
-        },
-        "tunnel2_inside_cidr": "169.254.21.4/30",
-        "tunnel2_log_options": {
-          "cloudwatch_log_options": {
-            "log_enabled": true,
-            "log_group_arn": "\${aws_cloudwatch_log_group.my-aws-vpc-aws-azure-cgw-log-group.arn}",
-            "log_output_format": "text"
-          }
-        },
-        "type": "ipsec.1",
-        "vpn_gateway_id": "\${aws_vpn_gateway.cmk_vgw.id}"
-      },
-      "aws_azure_vpn_connection_1": {
-        "customer_gateway_id": "\${aws_customer_gateway.aws_azure_cgw_1.id}",
-        "provider": "aws",
-        "static_routes_only": false,
-        "tags": {
-          "Name": "my-aws-vpc-aws-azure-vpn-connection-2"
-        },
-        "tunnel1_inside_cidr": "169.254.22.0/30",
-        "tunnel1_log_options": {
-          "cloudwatch_log_options": {
-            "log_enabled": true,
-            "log_group_arn": "\${aws_cloudwatch_log_group.my-aws-vpc-aws-azure-cgw-log-group.arn}",
-            "log_output_format": "text"
-          }
-        },
-        "tunnel2_inside_cidr": "169.254.22.4/30",
-        "tunnel2_log_options": {
-          "cloudwatch_log_options": {
-            "log_enabled": true,
-            "log_group_arn": "\${aws_cloudwatch_log_group.my-aws-vpc-aws-azure-cgw-log-group.arn}",
-            "log_output_format": "text"
-          }
-        },
-        "type": "ipsec.1",
-        "vpn_gateway_id": "\${aws_vpn_gateway.cmk_vgw.id}"
-      },
       "aws_google_vpn_connection_0": {
         "customer_gateway_id": "\${aws_customer_gateway.aws_google_cgw_0.id}",
         "provider": "aws",
@@ -340,445 +302,6 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
         "vpn_gateway_id": "\${aws_vpn_gateway.cmk_vgw.id}"
       }
     },
-    "azurerm_linux_virtual_machine": {
-      "vm-0": {
-        "admin_ssh_key": [
-          {
-            "public_key": "\${tls_private_key.ssh-key.public_key_openssh}",
-            "username": "azureuser"
-          }
-        ],
-        "admin_username": "azureuser",
-        "location": "Japan East",
-        "name": "example-vm-1",
-        "network_interface_ids": [
-          "\${azurerm_network_interface.nic-0.id}"
-        ],
-        "os_disk": {
-          "caching": "ReadWrite",
-          "storage_account_type": "Standard_LRS"
-        },
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "size": "Standard_B1ls",
-        "source_image_reference": {
-          "offer": "ubuntu-24_04-lts",
-          "publisher": "Canonical",
-          "sku": "server",
-          "version": "latest"
-        }
-      }
-    },
-    "azurerm_local_network_gateway": {
-      "local-gatewayaws-0": {
-        "address_space": [
-          "10.0.0.0/16"
-        ],
-        "bgp_settings": {
-          "asn": 64512,
-          "bgp_peering_address": "169.254.21.1"
-        },
-        "gateway_address": "\${aws_vpn_connection.aws_azure_vpn_connection_0.tunnel1_address}",
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network.azureVnet.name}-aws-lng-1",
-        "resource_group_name": "rg_multicloud"
-      },
-      "local-gatewayaws-1": {
-        "address_space": [
-          "10.0.0.0/16"
-        ],
-        "bgp_settings": {
-          "asn": 64512,
-          "bgp_peering_address": "169.254.21.5"
-        },
-        "gateway_address": "\${aws_vpn_connection.aws_azure_vpn_connection_0.tunnel2_address}",
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network.azureVnet.name}-aws-lng-2",
-        "resource_group_name": "rg_multicloud"
-      },
-      "local-gatewayaws-2": {
-        "address_space": [
-          "10.0.0.0/16"
-        ],
-        "bgp_settings": {
-          "asn": 64512,
-          "bgp_peering_address": "169.254.22.1"
-        },
-        "gateway_address": "\${aws_vpn_connection.aws_azure_vpn_connection_1.tunnel1_address}",
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network.azureVnet.name}-aws-lng-3",
-        "resource_group_name": "rg_multicloud"
-      },
-      "local-gatewayaws-3": {
-        "address_space": [
-          "10.0.0.0/16"
-        ],
-        "bgp_settings": {
-          "asn": 64512,
-          "bgp_peering_address": "169.254.22.5"
-        },
-        "gateway_address": "\${aws_vpn_connection.aws_azure_vpn_connection_1.tunnel2_address}",
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network.azureVnet.name}-aws-lng-4",
-        "resource_group_name": "rg_multicloud"
-      },
-      "local-gatewaygoogle-0": {
-        "address_space": [
-          "10.1.0.0/16"
-        ],
-        "bgp_settings": {
-          "asn": 65000,
-          "bgp_peering_address": "169.254.21.10"
-        },
-        "gateway_address": "\${google_compute_ha_vpn_gateway.azure_gcp_ha_vpn.vpn_interfaces[0].ip_address}",
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network.azureVnet.name}-google-lng-1",
-        "resource_group_name": "rg_multicloud"
-      },
-      "local-gatewaygoogle-1": {
-        "address_space": [
-          "10.1.0.0/16"
-        ],
-        "bgp_settings": {
-          "asn": 65000,
-          "bgp_peering_address": "169.254.22.10"
-        },
-        "gateway_address": "\${google_compute_ha_vpn_gateway.azure_gcp_ha_vpn.vpn_interfaces[1].ip_address}",
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network.azureVnet.name}-google-lng-2",
-        "resource_group_name": "rg_multicloud"
-      }
-    },
-    "azurerm_log_analytics_workspace": {
-      "azure_log_analytics_workspace": {
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network_gateway.azure_vng.name}-loganalytics",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "retention_in_days": 30
-      }
-    },
-    "azurerm_monitor_diagnostic_setting": {
-      "azure_vng_diagnostic_setting": {
-        "enabled_log": [
-          {
-            "category": "GatewayDiagnosticLog"
-          },
-          {
-            "category": "TunnelDiagnosticLog"
-          },
-          {
-            "category": "RouteDiagnosticLog"
-          },
-          {
-            "category": "IKEDiagnosticLog"
-          }
-        ],
-        "log_analytics_workspace_id": "\${azurerm_log_analytics_workspace.azure_log_analytics_workspace.id}",
-        "metric": [
-          {
-            "category": "AllMetrics",
-            "enabled": true
-          }
-        ],
-        "name": "\${azurerm_virtual_network_gateway.azure_vng.name}-diagnostic-setting",
-        "provider": "azurerm",
-        "target_resource_id": "\${azurerm_virtual_network_gateway.azure_vng.id}"
-      }
-    },
-    "azurerm_network_interface": {
-      "nic-0": {
-        "ip_configuration": [
-          {
-            "name": "internal",
-            "private_ip_address_allocation": "Dynamic",
-            "subnet_id": "\${data.azurerm_subnet.subnet-subnet1.id}"
-          }
-        ],
-        "location": "Japan East",
-        "name": "example-vm-1-nic",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud"
-      }
-    },
-    "azurerm_network_security_group": {
-      "multicloudVpnNsg": {
-        "location": "Japan East",
-        "name": "my-azure-vnet-nsg",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud"
-      }
-    },
-    "azurerm_network_security_rule": {
-      "nsgRule-AllowAllOutBound": {
-        "access": "Allow",
-        "destination_address_prefix": "*",
-        "destination_port_range": "*",
-        "direction": "Outbound",
-        "name": "AllowAllOutBound",
-        "network_security_group_name": "\${azurerm_network_security_group.multicloudVpnNsg.name}",
-        "priority": 4095,
-        "protocol": "*",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "source_address_prefix": "*",
-        "source_port_range": "*"
-      },
-      "nsgRule-AllowAzureLoadBalancerInBound": {
-        "access": "Allow",
-        "destination_address_prefix": "*",
-        "destination_port_range": "*",
-        "direction": "Inbound",
-        "name": "AllowAzureLoadBalancerInBound",
-        "network_security_group_name": "\${azurerm_network_security_group.multicloudVpnNsg.name}",
-        "priority": 101,
-        "protocol": "*",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "source_address_prefix": "AzureLoadBalancer",
-        "source_port_range": "*"
-      },
-      "nsgRule-AllowVnetInBound": {
-        "access": "Allow",
-        "destination_address_prefix": "VirtualNetwork",
-        "destination_port_range": "*",
-        "direction": "Inbound",
-        "name": "AllowVnetInBound",
-        "network_security_group_name": "\${azurerm_network_security_group.multicloudVpnNsg.name}",
-        "priority": 100,
-        "protocol": "*",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "source_address_prefix": "VirtualNetwork",
-        "source_port_range": "*"
-      },
-      "nsgRule-AllowVnetOutBound": {
-        "access": "Allow",
-        "destination_address_prefix": "VirtualNetwork",
-        "destination_port_range": "*",
-        "direction": "Outbound",
-        "name": "AllowVnetOutBound",
-        "network_security_group_name": "\${azurerm_network_security_group.multicloudVpnNsg.name}",
-        "priority": 100,
-        "protocol": "*",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "source_address_prefix": "VirtualNetwork",
-        "source_port_range": "*"
-      },
-      "nsgRule-DenyAllInBound": {
-        "access": "Deny",
-        "destination_address_prefix": "*",
-        "destination_port_range": "*",
-        "direction": "Inbound",
-        "name": "DenyAllInBound",
-        "network_security_group_name": "\${azurerm_network_security_group.multicloudVpnNsg.name}",
-        "priority": 4096,
-        "protocol": "*",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "source_address_prefix": "*",
-        "source_port_range": "*"
-      },
-      "nsgRule-DenyAllOutBound": {
-        "access": "Deny",
-        "destination_address_prefix": "*",
-        "destination_port_range": "*",
-        "direction": "Outbound",
-        "name": "DenyAllOutBound",
-        "network_security_group_name": "\${azurerm_network_security_group.multicloudVpnNsg.name}",
-        "priority": 4096,
-        "protocol": "*",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "source_address_prefix": "*",
-        "source_port_range": "*"
-      }
-    },
-    "azurerm_public_ip": {
-      "azure_gw_public_ips_vpn-gateway-ip-1": {
-        "allocation_method": "Static",
-        "location": "Japan East",
-        "name": "vpn-gateway-ip-1",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud"
-      },
-      "azure_gw_public_ips_vpn-gateway-ip-2": {
-        "allocation_method": "Static",
-        "location": "Japan East",
-        "name": "vpn-gateway-ip-2",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud"
-      }
-    },
-    "azurerm_subnet": {
-      "azure_gatewaySubnet": {
-        "address_prefixes": [
-          "10.2.100.0/24"
-        ],
-        "name": "GatewaySubnet",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "virtual_network_name": "\${azurerm_virtual_network.azureVnet.name}"
-      },
-      "myAzureSubnet-subnet1": {
-        "address_prefixes": [
-          "10.2.10.0/24"
-        ],
-        "name": "my-azure-vnet-subnet1",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "virtual_network_name": "\${azurerm_virtual_network.azureVnet.name}"
-      },
-      "myAzureSubnet-subnet2": {
-        "address_prefixes": [
-          "10.2.20.0/24"
-        ],
-        "name": "my-azure-vnet-subnet2",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "virtual_network_name": "\${azurerm_virtual_network.azureVnet.name}"
-      }
-    },
-    "azurerm_subnet_network_security_group_association": {
-      "nsgAssociation-subnet1": {
-        "network_security_group_id": "\${azurerm_network_security_group.multicloudVpnNsg.id}",
-        "provider": "azurerm",
-        "subnet_id": "\${azurerm_subnet.myAzureSubnet-subnet1.id}"
-      },
-      "nsgAssociation-subnet2": {
-        "network_security_group_id": "\${azurerm_network_security_group.multicloudVpnNsg.id}",
-        "provider": "azurerm",
-        "subnet_id": "\${azurerm_subnet.myAzureSubnet-subnet2.id}"
-      }
-    },
-    "azurerm_virtual_network": {
-      "azureVnet": {
-        "address_space": [
-          "10.2.0.0/16"
-        ],
-        "location": "Japan East",
-        "name": "my-azure-vnet",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud"
-      }
-    },
-    "azurerm_virtual_network_gateway": {
-      "azure_vng": {
-        "active_active": true,
-        "bgp_settings": {
-          "asn": 65515,
-          "peering_addresses": [
-            {
-              "apipa_addresses": [
-                "169.254.21.2",
-                "169.254.21.6",
-                "169.254.21.9"
-              ],
-              "ip_configuration_name": "vnetGatewayConfig-1"
-            },
-            {
-              "apipa_addresses": [
-                "169.254.22.2",
-                "169.254.22.6",
-                "169.254.22.9"
-              ],
-              "ip_configuration_name": "vnetGatewayConfig-2"
-            }
-          ]
-        },
-        "enable_bgp": true,
-        "ip_configuration": [
-          {
-            "name": "vnetGatewayConfig-1",
-            "private_ip_address_allocation": "Dynamic",
-            "public_ip_address_id": "\${azurerm_public_ip.azure_gw_public_ips_vpn-gateway-ip-1.id}",
-            "subnet_id": "\${azurerm_subnet.azure_gatewaySubnet.id}"
-          },
-          {
-            "name": "vnetGatewayConfig-2",
-            "private_ip_address_allocation": "Dynamic",
-            "public_ip_address_id": "\${azurerm_public_ip.azure_gw_public_ips_vpn-gateway-ip-2.id}",
-            "subnet_id": "\${azurerm_subnet.azure_gatewaySubnet.id}"
-          }
-        ],
-        "location": "Japan East",
-        "name": "my-azure-vnet-vng",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "sku": "VpnGw1",
-        "type": "Vpn",
-        "vpn_type": "RouteBased"
-      }
-    },
-    "azurerm_virtual_network_gateway_connection": {
-      "azure-toaws-remote-0": {
-        "enable_bgp": true,
-        "local_network_gateway_id": "\${azurerm_local_network_gateway.local-gatewayaws-0.id}",
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network.azureVnet.name}-aws-lng-connection-1",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "shared_key": "\${aws_vpn_connection.aws_azure_vpn_connection_0.tunnel1_preshared_key}",
-        "type": "IPsec",
-        "virtual_network_gateway_id": "\${azurerm_virtual_network_gateway.azure_vng.id}"
-      },
-      "azure-toaws-remote-1": {
-        "enable_bgp": true,
-        "local_network_gateway_id": "\${azurerm_local_network_gateway.local-gatewayaws-1.id}",
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network.azureVnet.name}-aws-lng-connection-2",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "shared_key": "\${aws_vpn_connection.aws_azure_vpn_connection_0.tunnel2_preshared_key}",
-        "type": "IPsec",
-        "virtual_network_gateway_id": "\${azurerm_virtual_network_gateway.azure_vng.id}"
-      },
-      "azure-toaws-remote-2": {
-        "enable_bgp": true,
-        "local_network_gateway_id": "\${azurerm_local_network_gateway.local-gatewayaws-2.id}",
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network.azureVnet.name}-aws-lng-connection-3",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "shared_key": "\${aws_vpn_connection.aws_azure_vpn_connection_1.tunnel1_preshared_key}",
-        "type": "IPsec",
-        "virtual_network_gateway_id": "\${azurerm_virtual_network_gateway.azure_vng.id}"
-      },
-      "azure-toaws-remote-3": {
-        "enable_bgp": true,
-        "local_network_gateway_id": "\${azurerm_local_network_gateway.local-gatewayaws-3.id}",
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network.azureVnet.name}-aws-lng-connection-4",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "shared_key": "\${aws_vpn_connection.aws_azure_vpn_connection_1.tunnel2_preshared_key}",
-        "type": "IPsec",
-        "virtual_network_gateway_id": "\${azurerm_virtual_network_gateway.azure_vng.id}"
-      },
-      "azure-togoogle-remote-0": {
-        "enable_bgp": true,
-        "local_network_gateway_id": "\${azurerm_local_network_gateway.local-gatewaygoogle-0.id}",
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network.azureVnet.name}-google-lng-connection-1",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "shared_key": "test#01",
-        "type": "IPsec",
-        "virtual_network_gateway_id": "\${azurerm_virtual_network_gateway.azure_vng.id}"
-      },
-      "azure-togoogle-remote-1": {
-        "enable_bgp": true,
-        "local_network_gateway_id": "\${azurerm_local_network_gateway.local-gatewaygoogle-1.id}",
-        "location": "Japan East",
-        "name": "\${azurerm_virtual_network.azureVnet.name}-google-lng-connection-2",
-        "provider": "azurerm",
-        "resource_group_name": "rg_multicloud",
-        "shared_key": "test#01",
-        "type": "IPsec",
-        "virtual_network_gateway_id": "\${azurerm_virtual_network_gateway.azure_vng.id}"
-      }
-    },
     "google_compute_external_vpn_gateway": {
       "aws-google-vpngateway": {
         "interface": [
@@ -802,21 +325,6 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
         "name": "aws-google-vpngateway",
         "provider": "google",
         "redundancy_type": "FOUR_IPS_REDUNDANCY"
-      },
-      "azure-google-vpngateway": {
-        "interface": [
-          {
-            "id": 0,
-            "ip_address": "\${data.azurerm_public_ip.pip_vgw_vpn-gateway-ip-1.ip_address}"
-          },
-          {
-            "id": 1,
-            "ip_address": "\${data.azurerm_public_ip.pip_vgw_vpn-gateway-ip-2.ip_address}"
-          }
-        ],
-        "name": "azure-google-vpngateway",
-        "provider": "google",
-        "redundancy_type": "TWO_IPS_REDUNDANCY"
       }
     },
     "google_compute_firewall": {
@@ -907,11 +415,6 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
         "name": "aws-google-vpngateway",
         "network": "\${google_compute_network.googleVpc.name}",
         "provider": "google"
-      },
-      "azure_gcp_ha_vpn": {
-        "name": "azure-google-vpngateway",
-        "network": "\${google_compute_network.googleVpc.name}",
-        "provider": "google"
       }
     },
     "google_compute_instance": {
@@ -969,14 +472,6 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
         "name": "aws-google-cloud-router",
         "network": "\${google_compute_network.googleVpc.name}",
         "provider": "google"
-      },
-      "azure_gcp_router": {
-        "bgp": {
-          "asn": 65000
-        },
-        "name": "azure-google-cloud-router",
-        "network": "\${google_compute_network.googleVpc.name}",
-        "provider": "google"
       }
     },
     "google_compute_router_interface": {
@@ -1007,18 +502,6 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
         "provider": "google",
         "router": "aws-google-cloud-router",
         "vpn_tunnel": "\${google_compute_vpn_tunnel.VpnTunnelaws-4.name}"
-      },
-      "RouterInterfaceazure-1": {
-        "name": "my-gcp-vpc-gcp-azure-router-interface-1",
-        "provider": "google",
-        "router": "azure-google-cloud-router",
-        "vpn_tunnel": "\${google_compute_vpn_tunnel.VpnTunnelazure-1.name}"
-      },
-      "RouterInterfaceazure-2": {
-        "name": "my-gcp-vpc-gcp-azure-router-interface-2",
-        "provider": "google",
-        "router": "azure-google-cloud-router",
-        "vpn_tunnel": "\${google_compute_vpn_tunnel.VpnTunnelazure-2.name}"
       }
     },
     "google_compute_router_peer": {
@@ -1057,26 +540,6 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
         "peer_ip_address": "\${aws_vpn_connection.aws_google_vpn_connection_1.tunnel2_vgw_inside_address}",
         "provider": "google",
         "router": "aws-google-cloud-router"
-      },
-      "RouterPeerazure-1": {
-        "advertised_route_priority": 100,
-        "interface": "\${google_compute_router_interface.RouterInterfaceazure-1.name}",
-        "ip_address": "169.254.21.10",
-        "name": "my-gcp-vpc-gcp-azure-router-peer-1",
-        "peer_asn": 65515,
-        "peer_ip_address": "169.254.21.9",
-        "provider": "google",
-        "router": "azure-google-cloud-router"
-      },
-      "RouterPeerazure-2": {
-        "advertised_route_priority": 100,
-        "interface": "\${google_compute_router_interface.RouterInterfaceazure-2.name}",
-        "ip_address": "169.254.22.10",
-        "name": "my-gcp-vpc-gcp-azure-router-peer-2",
-        "peer_asn": 65515,
-        "peer_ip_address": "169.254.22.9",
-        "provider": "google",
-        "router": "azure-google-cloud-router"
       }
     },
     "google_compute_subnetwork": {
@@ -1138,28 +601,6 @@ exports[`MultiCloudVpnStack Snapshot test 1`] = `
         "router": "aws-google-cloud-router",
         "shared_secret": "\${aws_vpn_connection.aws_google_vpn_connection_1.tunnel2_preshared_key}",
         "vpn_gateway": "\${google_compute_ha_vpn_gateway.aws_gcp_ha_vpn.id}",
-        "vpn_gateway_interface": 1
-      },
-      "VpnTunnelazure-1": {
-        "ike_version": 2,
-        "name": "my-gcp-vpc-gcp-azure-vpn-tunnel-1",
-        "peer_external_gateway": "\${google_compute_external_vpn_gateway.azure-google-vpngateway.id}",
-        "peer_external_gateway_interface": 0,
-        "provider": "google",
-        "router": "azure-google-cloud-router",
-        "shared_secret": "test#01",
-        "vpn_gateway": "\${google_compute_ha_vpn_gateway.azure_gcp_ha_vpn.id}",
-        "vpn_gateway_interface": 0
-      },
-      "VpnTunnelazure-2": {
-        "ike_version": 2,
-        "name": "my-gcp-vpc-gcp-azure-vpn-tunnel-2",
-        "peer_external_gateway": "\${google_compute_external_vpn_gateway.azure-google-vpngateway.id}",
-        "peer_external_gateway_interface": 1,
-        "provider": "google",
-        "router": "azure-google-cloud-router",
-        "shared_secret": "test#01",
-        "vpn_gateway": "\${google_compute_ha_vpn_gateway.azure_gcp_ha_vpn.id}",
         "vpn_gateway_interface": 1
       }
     },
