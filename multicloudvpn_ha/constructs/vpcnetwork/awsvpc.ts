@@ -110,12 +110,11 @@ export function createAwsVpcResources(
 
   // EC2 Instance Connect Endpoint
   const firstSubnet = subnets[0];
-
   const securityGroupMapping = Object.fromEntries(
-    securityGroups.map((sg) => [sg.tags?.Name, sg.id])
-  );
-  const securityGroupIds = params.ec2ICEndpoint.securityGroupNames.map(
-    (name) => securityGroupMapping[name]
+    securityGroups.map((sg, index) => [
+      `${params.securityGroups[index].name}`,
+      sg.id,
+    ])
   );
 
   const ec2InstanceConnectEndpoint = new Ec2InstanceConnectEndpoint(
@@ -124,7 +123,9 @@ export function createAwsVpcResources(
     {
       provider: provider,
       subnetId: firstSubnet.id,
-      securityGroupIds: securityGroupIds,
+      securityGroupIds: params.ec2ICEndpoint.securityGroupNames.map(
+        (name) => securityGroupMapping[name]
+      ),
       tags: {
         Name: params.ec2ICEndpoint.endpointName,
       },
