@@ -42,24 +42,12 @@ export const createVmResources = (
   if ((awsToAzure || awsToGoogle) && ec2Building) {
     //AWS EC2 Instances
     const getSecurityGroupId = (name: string): string => {
-      if (
-        awsVpcResources.securityGroupMapping &&
-        typeof awsVpcResources.securityGroupMapping === "object"
-      ) {
-        const securityGroupId = awsVpcResources.securityGroupMapping[name];
-        if (securityGroupId) {
-          console.log(
-            `Found security group with ID: ${Token.asString(securityGroupId)}`
-          );
-          return Token.asString(securityGroupId);
-        } else {
-          console.log(`No security group found for name: ${name}`);
-          return "default-security-group-id";
-        }
-      } else {
-        console.log("securityGroupMapping is not properly defined");
-        return "default-security-group-id";
+      const mapping = awsVpcResources.securityGroupMapping;
+      if (mapping && typeof mapping === "object" && name in mapping) {
+        return Token.asString(mapping[name as keyof typeof mapping]);
       }
+      console.log(`No security group found for name: ${name}`);
+      return "default-security-group-id";
     };
 
     const awsEc2Instances = createAwsEc2Instances(scope, awsProvider, {
