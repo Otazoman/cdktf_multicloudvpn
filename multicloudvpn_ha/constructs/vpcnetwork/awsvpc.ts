@@ -2,6 +2,7 @@ import { DefaultRouteTable } from "@cdktf/provider-aws/lib/default-route-table";
 import { Ec2InstanceConnectEndpoint } from "@cdktf/provider-aws/lib/ec2-instance-connect-endpoint";
 import { AwsProvider } from "@cdktf/provider-aws/lib/provider";
 import { SecurityGroup } from "@cdktf/provider-aws/lib/security-group";
+import { SecurityGroupRule } from "@cdktf/provider-aws/lib/security-group-rule";
 import { Subnet } from "@cdktf/provider-aws/lib/subnet";
 import { Vpc as AwsVpc } from "@cdktf/provider-aws/lib/vpc";
 import { Construct } from "constructs";
@@ -12,7 +13,7 @@ interface SubnetConfig {
   name: string;
 }
 
-interface SecurityGroupRule {
+interface SecurityGroupRuleConfig {
   fromPort: number;
   toPort: number;
   protocol: string;
@@ -22,9 +23,10 @@ interface SecurityGroupRule {
 }
 
 interface SecurityGroupConfig {
+  resourcetype: string;
   name: string;
-  ingress: SecurityGroupRule[];
-  egress: SecurityGroupRule[];
+  ingress: SecurityGroupRuleConfig[];
+  egress: SecurityGroupRuleConfig[];
 }
 
 interface ec2InstanceConnectEndpointsConfig {
@@ -76,22 +78,28 @@ export function createAwsVpcResources(
       provider: provider,
       vpcId: vpc.id,
       name: sgConfig.name,
-      ingress: sgConfig.ingress.map((rule) => ({
-        fromPort: rule.fromPort,
-        toPort: rule.toPort,
-        protocol: rule.protocol,
-        cidrBlocks: rule.cidrBlocks,
-        ipv6CidrBlocks: rule.ipv6CidrBlocks,
-        description: rule.description,
-      })),
-      egress: sgConfig.egress.map((rule) => ({
-        fromPort: rule.fromPort,
-        toPort: rule.toPort,
-        protocol: rule.protocol,
-        cidrBlocks: rule.cidrBlocks,
-        ipv6CidrBlocks: rule.ipv6CidrBlocks,
-        description: rule.description,
-      })),
+      ingress:
+        sgConfig.ingress.length > 0
+          ? sgConfig.ingress.map((rule) => ({
+              fromPort: rule.fromPort,
+              toPort: rule.toPort,
+              protocol: rule.protocol,
+              cidrBlocks: rule.cidrBlocks,
+              ipv6CidrBlocks: rule.ipv6CidrBlocks,
+              description: rule.description,
+            }))
+          : [],
+      egress:
+        sgConfig.egress.length > 0
+          ? sgConfig.egress.map((rule) => ({
+              fromPort: rule.fromPort,
+              toPort: rule.toPort,
+              protocol: rule.protocol,
+              cidrBlocks: rule.cidrBlocks,
+              ipv6CidrBlocks: rule.ipv6CidrBlocks,
+              description: rule.description,
+            }))
+          : [],
       tags: {
         Name: sgConfig.name,
       },
@@ -132,10 +140,32 @@ export function createAwsVpcResources(
     }
   );
 
+  // Add instance connect SG to EC2 security group
+  const ec2SecurityGroup = securityGroups.find(
+    (_, index) => params.securityGroups[index].resourcetype === "ec2"
+  );
+
+  if (ec2SecurityGroup) {
+    const ec2ConnectSgId =
+      securityGroupMapping[params.ec2ICEndpoint.securityGroupNames[0]];
+
+    new SecurityGroupRule(scope, "ec2InstanceConnectIngressRule", {
+      provider: provider,
+      type: "ingress",
+      fromPort: 22,
+      toPort: 22,
+      protocol: "tcp",
+      sourceSecurityGroupId: ec2ConnectSgId,
+      securityGroupId: ec2SecurityGroup.id,
+      description: "Allow SSH from EC2 Instance Connect Endpoint",
+    });
+  }
+
   return {
     vpc,
     subnets,
     securityGroups,
+    securityGroupMapping,
     ec2InstanceConnectEndpoint,
   };
 }

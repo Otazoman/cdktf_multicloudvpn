@@ -21,6 +21,7 @@ export const awsVpcResourcesparams = {
   ],
   securityGroups: [
     {
+      resourcetype: "ec2",
       name: "my-aws-vpc-sg1",
       ingress: [
         {
@@ -43,24 +44,17 @@ export const awsVpcResourcesparams = {
       ],
     },
     {
+      resourcetype: "other",
       name: "EC2InstanceConnect",
-      ingress: [
+      ingress: [],
+      egress: [
         {
           fromPort: 22,
           toPort: 22,
           protocol: "tcp",
           cidrBlocks: ["0.0.0.0/0"],
-          description: "EC2 Instance Connect",
-        },
-      ],
-      egress: [
-        {
-          fromPort: 0,
-          toPort: 0,
-          protocol: "-1",
-          cidrBlocks: ["0.0.0.0/0"],
           ipv6CidrBlocks: ["::/0"],
-          description: "Allow all outbound traffic",
+          description: "EC2 Instance Connect",
         },
       ],
     },
@@ -114,6 +108,6 @@ export const ec2Configs = [
   //   tags: {
   //     Name: "MyEC2Instance2",
   //   },
-  //   securityGroupNames: ["EC2InstanceConnect"],
+  //   securityGroupNames: ["my-aws-vpc-sg1"],
   // },
 ];
