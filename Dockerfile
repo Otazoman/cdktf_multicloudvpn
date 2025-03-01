@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install CDK for Terraform globally
-RUN npm install --global cdktf-cli
+RUN npm install --global cdktf-cli@latest
 
 # Install terraform
 ARG TERRAFORM_VERSION

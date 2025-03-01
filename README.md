@@ -34,10 +34,10 @@ docker compose exec cdktf-vpn bash
 
 ```
 cdktf init --template=typescript --local
-npm install @cdktf/provider-aws
-npm install @cdktf/provider-google
-npm install @cdktf/provider-azurerm
-npm install @cdktf/provider-tls
+npm install @cdktf/provider-aws@latest
+npm install @cdktf/provider-google@latest
+npm install @cdktf/provider-azurerm@latest
+npm install @cdktf/provider-tls@latest
 ```
 
 ## When you want to run a minute that has already been created
