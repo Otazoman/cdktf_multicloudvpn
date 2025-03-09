@@ -60,7 +60,11 @@ export const createGoogleVpnPeerParams = (
   routerName: string,
   vpnGateway: any,
   externalVpnGateway: any,
-  vpnConnections: any
+  vpnConnections: any,
+  isSingleTunnel: boolean,
+  gcpVpcCidr: string,
+  peerVpcCidr: string,
+  gcpNetwork: string
 ) => ({
   connectDestination: connectDestination,
   vpnTnnelname: `${vpcName}-gcp-${connectDestination}-vpn-tunnel`,
@@ -72,6 +76,10 @@ export const createGoogleVpnPeerParams = (
   vpnGateway: vpnGateway,
   externalVpnGateway: externalVpnGateway,
   vpnConnections: vpnConnections,
+  isSingleTunnel: isSingleTunnel,
+  gcpVpcCidr: gcpVpcCidr,
+  peerVpcCidr: peerVpcCidr,
+  gcpNetwork: gcpNetwork,
 });
 
 /* GCE */

@@ -163,7 +163,7 @@ export const createLocalGatewayParams = (
 });
 
 /* AzureVM */
-export const vmBuilding = true;
+export const vmBuilding = false;
 export const azureVmsConfigparams = [
   {
     name: "example-vm-1",

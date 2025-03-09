@@ -3,7 +3,7 @@ import { Construct } from "constructs";
 import { createProviders } from "../providers/providers";
 import { createVmResources } from "../resources/vmResources";
 import { createVpcResources } from "../resources/vpcResources";
-import { createVpnResources } from "../resources/vpnHaResources";
+import { createVpnResources } from "../resources/vpnResources";
 import { createSshKey } from "../utils/sshKey";
 
 export class MultiCloudVpnStack extends TerraformStack {

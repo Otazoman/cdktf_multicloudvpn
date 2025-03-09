@@ -1,4 +1,5 @@
 import { ComputeExternalVpnGateway } from "@cdktf/provider-google/lib/compute-external-vpn-gateway";
+import { ComputeRoute } from "@cdktf/provider-google/lib/compute-route";
 import { ComputeRouterInterface } from "@cdktf/provider-google/lib/compute-router-interface";
 import { ComputeRouterPeer } from "@cdktf/provider-google/lib/compute-router-peer";
 import { ComputeVpnTunnel } from "@cdktf/provider-google/lib/compute-vpn-tunnel";
@@ -31,9 +32,64 @@ interface GoogleVpnParams {
   vpnConnections: TunnelConfig[];
   externalVpnGateway: ExternalVpnGatewayParams;
   connectDestination: string;
+  isSingleTunnel?: boolean;
+  gcpVpcCidr: string;
+  peerVpcCidr: string;
+  gcpNetwork: string;
 }
 
 export function createGooglePeerTunnel(
+  scope: Construct,
+  provider: GoogleProvider,
+  params: GoogleVpnParams
+) {
+  if (params.isSingleTunnel) {
+    return createSingleTunnel(scope, provider, params);
+  } else {
+    return createHaTunnel(scope, provider, params);
+  }
+}
+
+// SingleVPN
+function createSingleTunnel(
+  scope: Construct,
+  provider: GoogleProvider,
+  params: GoogleVpnParams
+) {
+  // Vpn Tunnel
+  const tunnel = params.vpnConnections[0];
+  const vpnTunnel = new ComputeVpnTunnel(
+    scope,
+    `VpnTunnel-${params.connectDestination}-1`,
+    {
+      provider,
+      name: `${params.vpnTnnelname}-1`,
+      targetVpnGateway: params.vpnGateway.vpnGatewayId,
+      peerIp: tunnel.peerAddress,
+      sharedSecret: tunnel.preshared_key,
+      ikeVersion: params.ikeVersion,
+      localTrafficSelector: [params.gcpVpcCidr],
+      remoteTrafficSelector: [params.peerVpcCidr],
+    }
+  );
+
+  // Add route
+  const vpnRoute = new ComputeRoute(scope, "RouteToPeerVpc", {
+    provider: provider,
+    name: `${params.vpnTnnelname}-route-to-peer`,
+    destRange: params.peerVpcCidr,
+    network: params.gcpNetwork,
+    nextHopVpnTunnel: vpnTunnel.id,
+  });
+
+  return {
+    vpnTunnels: [vpnTunnel],
+    vpnRoute,
+  };
+}
+
+// HA VPN
+function createHaTunnel(
   scope: Construct,
   provider: GoogleProvider,
   params: GoogleVpnParams

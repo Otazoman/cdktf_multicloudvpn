@@ -30,6 +30,7 @@ interface VpnGatewayParams {
   diagnosticSettings: {
     retentionInDays: number;
   };
+  isSingleTunnel: boolean;
 }
 
 export function createAzureVpnGateway(
@@ -67,43 +68,56 @@ export function createAzureVpnGateway(
     type: params.vpnProps.type,
     vpnType: params.vpnProps.vpnType,
     enableBgp: true,
-    activeActive: true,
+    activeActive: !params.isSingleTunnel, // HA:true, Single:false
     sku: params.vpnProps.sku,
-    bgpSettings: {
-      asn: params.vpnProps.azureAsn,
-      peeringAddresses: [
-        {
-          ipConfigurationName: "vnetGatewayConfig-1",
-          apipaAddresses: [
-            params.vpnProps.awsGwIp1ip1,
-            params.vpnProps.awsGwIp1ip2,
-            params.vpnProps.googleGWip1,
-          ].filter((ip): ip is string => ip !== undefined),
+    bgpSettings: params.isSingleTunnel
+      ? undefined
+      : {
+          asn: params.vpnProps.azureAsn,
+          peeringAddresses: [
+            {
+              ipConfigurationName: "vnetGatewayConfig-1",
+              apipaAddresses: [
+                params.vpnProps.awsGwIp1ip1,
+                params.vpnProps.awsGwIp1ip2,
+                params.vpnProps.googleGWip1,
+              ].filter((ip): ip is string => ip !== undefined),
+            },
+            {
+              ipConfigurationName: "vnetGatewayConfig-2",
+              apipaAddresses: [
+                params.vpnProps.awsGwIp2ip1,
+                params.vpnProps.awsGwIp2ip2,
+                params.vpnProps.googleGWip2,
+              ].filter((ip): ip is string => ip !== undefined),
+            },
+          ],
         },
-        {
-          ipConfigurationName: "vnetGatewayConfig-2",
-          apipaAddresses: [
-            params.vpnProps.awsGwIp2ip1,
-            params.vpnProps.awsGwIp2ip2,
-            params.vpnProps.googleGWip2,
-          ].filter((ip): ip is string => ip !== undefined),
-        },
-      ],
-    },
-    ipConfiguration: [
-      {
-        name: "vnetGatewayConfig-1",
-        publicIpAddressId: publicIps[0].id,
-        privateIpAddressAllocation: params.vpnProps.pipAlloc,
-        subnetId: gatewaySubnet.id,
-      },
-      {
-        name: "vnetGatewayConfig-2",
-        publicIpAddressId: publicIps[1].id,
-        privateIpAddressAllocation: params.vpnProps.pipAlloc,
-        subnetId: gatewaySubnet.id,
-      },
-    ],
+    ipConfiguration: params.isSingleTunnel
+      ? [
+          // シングル構成の場合は単一の IP 構成
+          {
+            name: "vnetGatewayConfig-1",
+            publicIpAddressId: publicIps[0].id,
+            privateIpAddressAllocation: params.vpnProps.pipAlloc,
+            subnetId: gatewaySubnet.id,
+          },
+        ]
+      : [
+          // HA構成の場合は複数の IP 構成
+          {
+            name: "vnetGatewayConfig-1",
+            publicIpAddressId: publicIps[0].id,
+            privateIpAddressAllocation: params.vpnProps.pipAlloc,
+            subnetId: gatewaySubnet.id,
+          },
+          {
+            name: "vnetGatewayConfig-2",
+            publicIpAddressId: publicIps[1].id,
+            privateIpAddressAllocation: params.vpnProps.pipAlloc,
+            subnetId: gatewaySubnet.id,
+          },
+        ],
   });
 
   // Public IP data acquisition (must wait for Azure creation to be completed before handing over)

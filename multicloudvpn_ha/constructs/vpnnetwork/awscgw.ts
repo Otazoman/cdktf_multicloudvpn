@@ -19,6 +19,7 @@ interface CustomerGatewayParams {
     awsGwIpCidr2: string[];
   };
   logRetentionDays: number;
+  isSingleTunnel: boolean;
 }
 
 export function createAwsCustomerGateway(
@@ -60,7 +61,7 @@ export function createAwsCustomerGateway(
         vpnGatewayId: params.vpnGatewayId,
         customerGatewayId: cgw.id,
         type: params.awsVpnCgwProps.type,
-        staticRoutesOnly: false,
+        staticRoutesOnly: params.isSingleTunnel,
         tunnel1LogOptions: {
           cloudwatchLogOptions: {
             logEnabled: true,

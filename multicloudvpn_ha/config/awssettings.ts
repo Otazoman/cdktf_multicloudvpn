@@ -75,7 +75,8 @@ export const createCustomerGatewayParams = (
   conneectDestination: string,
   bgpAsn: number,
   vpnGatewayId: any,
-  haIpAddresses: string[]
+  haIpAddresses: string[],
+  isSingleTunnel: boolean
 ) => ({
   customerGatewayName: `${awsVpcResourcesparams.vpcName}-aws-${conneectDestination}-cgw`,
   vpnConnectionName: `${awsVpcResourcesparams.vpcName}-aws-${conneectDestination}-vpn-connection`,
@@ -87,6 +88,7 @@ export const createCustomerGatewayParams = (
   logRetentionDays: awsVpnparams.logRetentionDays,
   vpnGatewayId: vpnGatewayId,
   awsHaVpnGatewayIpAddresses: haIpAddresses,
+  isSingleTunnel: isSingleTunnel,
 });
 
 /* EC2 */
