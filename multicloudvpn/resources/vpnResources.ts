@@ -37,10 +37,7 @@ import { createGooglePeerTunnel } from "../constructs/vpnnetwork/googletunnels";
 import { createGoogleVpnGateway } from "../constructs/vpnnetwork/googlevpngw";
 
 /*
-
-AWSとGoogleをHAにするとBGP接続が確立されなくなっている
-
-*/
+ */
 
 interface RouteConfig {
   target: string;
@@ -132,235 +129,100 @@ export function createVpnResources(
       awsGoogleVpnGatewayIpAddresses.push(externalIp);
     } else {
       // HA
-      resources.googleVpnGateways.externalIp.forEach(
-        (ip: (typeof resources.googleVpnGateways.externalIp)[0]) => {
-          awsGoogleVpnGatewayIpAddresses.push(ip.address);
-        }
-      );
-    }
 
-    // AWS CustomerGateway (Connect Google)
-    const awsGoogleCustomerGatewayParams = createCustomerGatewayParams(
-      destinationGoogle,
-      googleAwsVpnParams.bgpGoogleAsn,
-      resources.awsVpnGateway.id,
-      awsGoogleVpnGatewayIpAddresses,
-      isSingleTunnel
-    );
-    const awsGoogleCgwVpns = createAwsCustomerGateway(
-      scope,
-      awsProvider,
-      awsGoogleCustomerGatewayParams
-    );
-
-    const awsVpnConnections = awsGoogleCgwVpns.flatMap((cgw) => {
-      if (!cgw.vpnConnection) return [];
-      const vpnConnection = cgw.vpnConnection;
-      return [
-        {
-          address: vpnConnection.tunnel1Address,
-          preshared_key: vpnConnection.tunnel1PresharedKey,
-          apipaCidr: `${vpnConnection.tunnel1CgwInsideAddress}/30`,
-          peerAddress: isSingleTunnel
-            ? vpnConnection.tunnel1Address
-            : vpnConnection.tunnel1VgwInsideAddress,
-        },
-        {
-          address: vpnConnection.tunnel2Address,
-          preshared_key: vpnConnection.tunnel2PresharedKey,
-          apipaCidr: `${vpnConnection.tunnel2CgwInsideAddress}/30`,
-          peerAddress: isSingleTunnel
-            ? vpnConnection.tunnel2Address
-            : vpnConnection.tunnel2VgwInsideAddress,
-        },
-      ];
-    });
-
-    // Google VPN tunnels and peers (AWS)
-    const awsGoogleVpnGateway = {
-      vpnGatewayId: resources.googleVpnGateways.vpnGateway.id,
-      peerAsn: awsVpnparams.bgpAwsAsn,
-    };
-    const awsExternalVpnGateway = {
-      name: googleAwsVpnParams.vpnGatewayName,
-      interfaces: awsGoogleCgwVpns.flatMap((cgw) =>
-        cgw.vpnConnection
-          ? [
-              { ipAddress: cgw.vpnConnection.tunnel1Address },
-              { ipAddress: cgw.vpnConnection.tunnel2Address },
-            ]
-          : []
-      ),
-    };
-    const awsGoogleVpnParams = createGoogleVpnPeerParams(
-      destinationAws,
-      awsGoogleCgwVpns.length * 2,
-      googleAwsVpnParams.ikeVersion,
-      googleAwsVpnParams.cloudRouterName,
-      awsGoogleVpnGateway,
-      awsExternalVpnGateway,
-      awsVpnConnections,
-      isSingleTunnel,
-      googleVpcResourcesparams.vpcCidrblock,
-      awsVpcResourcesparams.vpcCidrBlock,
-      googleVpcResources.vpc.name
-    );
-    createGooglePeerTunnel(scope, googleProvider, awsGoogleVpnParams);
-
-    // AWS VPN Connection Routes for Google (Single Tunnel Only)
-    if (isSingleTunnel) {
-      const awsGoogleVpnConnectionRoutes: RouteConfig[] = [
-        {
-          target: "Google",
-          cidrBlock: googleVpcResourcesparams.vpcCidrblock,
-        },
-      ];
-
-      const vpnConnectionId = awsGoogleCgwVpns[0]?.vpnConnection?.id;
-      if (!vpnConnectionId) {
-        throw new Error("VPN Connection ID not found in AWS Customer Gateway.");
-      }
-
-      createVpnConnectionRoutes(scope, awsProvider, {
-        routes: awsGoogleVpnConnectionRoutes,
-        vpnConnectionId: vpnConnectionId,
-      });
-    }
-  }
-
-  if (awsToAzure || googleToAzure) {
-    // Azure VPN Gateway
-    const vpnProps: any = {
-      type: azureVpnparams.type,
-      vpnType: azureVpnparams.vpnType,
-      sku: azureVpnparams.sku,
-      azureAsn: azureVpnparams.azureAsn,
-      pipAlloc: azureVpnparams.pipAlloc,
-    };
-
-    if (awsToAzure) {
-      // AWS
-      vpnProps.awsGwIp1ip1 = azureAwsVpnparams.awsGwIp1ip1;
-      vpnProps.awsGwIp1ip2 = azureAwsVpnparams.awsGwIp1ip2;
-      vpnProps.awsGwIp2ip1 = azureAwsVpnparams.awsGwIp2ip1;
-      vpnProps.awsGwIp2ip2 = azureAwsVpnparams.awsGwIp2ip2;
-    }
-
-    if (googleToAzure) {
-      // Google
-      vpnProps.googleGWip1 = azureGoogleVpnparams.googleGwIp1;
-      vpnProps.googleGWip2 = azureGoogleVpnparams.googleGwIp2;
-      vpnProps.googlePeerIp1 = azureGoogleVpnparams.googlePeerIp1;
-      vpnProps.googlePeerIp2 = azureGoogleVpnparams.googlePeerIp2;
-    }
-
-    const azureVpnGatewayResourceparams = {
-      resourceGroupName: azureCommonparams.resourceGroup,
-      virtualNetworkName: azureVnetResources.vnet.name,
-      VpnGatewayName: azureVpnGatewayParams.VpnGatewayName,
-      gatewaySubnetCidr: azureVpnparams.gatewaySubnetCidr,
-      publicIpNames: azureVpnparams.publicIpNames,
-      location: azureCommonparams.location,
-      vpnProps: vpnProps,
-      diagnosticSettings: {
-        retentionInDays: azureVpnparams.retentionInDays,
-      },
-      isSingleTunnel: isSingleTunnel,
-    };
-
-    const azureVng = createAzureVpnGateway(
-      scope,
-      azureProvider,
-      azureVpnGatewayResourceparams
-    );
-
-    if (awsToAzure) {
-      const azurePublicIpAddresses = azureVng.publicIpData.map(
-        (pip) => pip.ipAddress
-      );
-
-      // const azurePublicIpAddresses = azureVng.publicIpData.map(
-      //   (_, index) => Fn.element(azureVng.publicIpData, index).ipAddress
+      // resources.googleVpnGateways.externalIp.forEach(
+      //   (ip: (typeof resources.googleVpnGateways.externalIp)[0]) => {
+      //     awsGoogleVpnGatewayIpAddresses.push(ip.address);
+      //   }
       // );
 
-      // AWS CustomerGateway (Connect Azure)
-      const azureCgwParams = createCustomerGatewayParams(
-        destinationAzure,
-        azureVpnparams.azureAsn,
+      const awsinterfaceCount = 2;
+      for (let index = 0; index < awsinterfaceCount; index++) {
+        const interfaceObj =
+          resources.googleVpnGateways.vpnGateway.vpnInterfaces.get(index);
+        if (interfaceObj) {
+          awsGoogleVpnGatewayIpAddresses.push(interfaceObj.ipAddress);
+        }
+      }
+
+      // AWS CustomerGateway (Connect Google)
+      const awsGoogleCustomerGatewayParams = createCustomerGatewayParams(
+        destinationGoogle,
+        googleAwsVpnParams.bgpGoogleAsn,
         resources.awsVpnGateway.id,
-        azurePublicIpAddresses,
+        awsGoogleVpnGatewayIpAddresses,
         isSingleTunnel
       );
-      const azureCustomerGatewayParams = {
-        ...azureCgwParams,
-        azureVpnProps: {
-          awsGwIpCidr1: azureAwsVpnparams.awsGwIp1Cidr,
-          awsGwIpCidr2: azureAwsVpnparams.awsGwIp2Cidr,
-        },
-      };
-      const awsAzureCgwVpns = createAwsCustomerGateway(
+      const awsGoogleCgwVpns = createAwsCustomerGateway(
         scope,
         awsProvider,
-        azureCustomerGatewayParams
+        awsGoogleCustomerGatewayParams
       );
 
-      // Create Azure Local Gateway (AWS)
-      const awsAzureVpnTunnels = awsAzureCgwVpns
-        .flatMap((cgw, index) => {
-          if (!cgw.vpnConnection) return [];
-          const tunnelIndex = index + 1;
-          return [
-            {
-              address: cgw.vpnConnection.tunnel1Address,
-              shared_key: cgw.vpnConnection.tunnel1PresharedKey,
-              cidrhost: (azureAwsVpnparams as any)[
-                `azureAwsGwIp${tunnelIndex}ip1`
-              ],
-            },
-            {
-              address: cgw.vpnConnection.tunnel2Address,
-              shared_key: cgw.vpnConnection.tunnel2PresharedKey,
-              cidrhost: (azureAwsVpnparams as any)[
-                `azureAwsGwIp${tunnelIndex}ip2`
-              ],
-            },
-          ];
-        })
-        .filter((tunnel) => tunnel !== null);
-
-      const awsTunnels = awsAzureVpnTunnels.map((tunnel, _index) => ({
-        localNetworkGatewayName: `${azureVnetResources.vnet.name}-${destinationAws}-lng`,
-        localGatewayAddress: tunnel.address,
-        localAddressSpaces: [awsVpcResourcesparams.vpcCidrBlock],
-        sharedKey: tunnel.shared_key,
-        bgpSettings: {
-          asn: awsVpnparams.bgpAwsAsn,
-          bgpPeeringAddress: tunnel.cidrhost,
-        },
-      }));
-
-      const awsAzureLocalGatewayParams = createLocalGatewayParams(
-        azureVng.virtualNetworkGateway.id,
-        destinationAws,
-        awsTunnels,
-        isSingleTunnel
-      );
-      resources.awsAzureLocalGateways = createAzureLocalGateways(
-        scope,
-        azureProvider,
-        awsAzureLocalGatewayParams
-      );
-
-      // AWS VPN Connection Routes for Azure (Single Tunnel Only)
-      if (isSingleTunnel) {
-        const awsAzureVpnConnectionRoutes: RouteConfig[] = [
+      const awsVpnConnections = awsGoogleCgwVpns.flatMap((cgw) => {
+        if (!cgw.vpnConnection) return [];
+        const vpnConnection = cgw.vpnConnection;
+        return [
           {
-            target: "Azure",
-            cidrBlock: azureVnetResourcesparams.vnetAddressSpace,
+            address: vpnConnection.tunnel1Address,
+            preshared_key: vpnConnection.tunnel1PresharedKey,
+            apipaCidr: `${vpnConnection.tunnel1CgwInsideAddress}/30`,
+            peerAddress: isSingleTunnel
+              ? vpnConnection.tunnel1Address
+              : vpnConnection.tunnel1VgwInsideAddress,
+          },
+          {
+            address: vpnConnection.tunnel2Address,
+            preshared_key: vpnConnection.tunnel2PresharedKey,
+            apipaCidr: `${vpnConnection.tunnel2CgwInsideAddress}/30`,
+            peerAddress: isSingleTunnel
+              ? vpnConnection.tunnel2Address
+              : vpnConnection.tunnel2VgwInsideAddress,
+          },
+        ];
+      });
+
+      // Google VPN tunnels and peers (AWS)
+      const awsGoogleVpnGateway = {
+        vpnGatewayId: resources.googleVpnGateways.vpnGateway.id,
+        peerAsn: awsVpnparams.bgpAwsAsn,
+      };
+      const awsExternalVpnGateway = {
+        name: googleAwsVpnParams.vpnGatewayName,
+        interfaces: awsGoogleCgwVpns.flatMap((cgw) =>
+          cgw.vpnConnection
+            ? [
+                { ipAddress: cgw.vpnConnection.tunnel1Address },
+                { ipAddress: cgw.vpnConnection.tunnel2Address },
+              ]
+            : []
+        ),
+      };
+      const awsGoogleVpnParams = createGoogleVpnPeerParams(
+        destinationAws,
+        awsGoogleCgwVpns.length * 2,
+        googleAwsVpnParams.ikeVersion,
+        googleAwsVpnParams.cloudRouterName,
+        awsGoogleVpnGateway,
+        awsExternalVpnGateway,
+        awsVpnConnections,
+        isSingleTunnel,
+        googleVpcResourcesparams.vpcCidrblock,
+        awsVpcResourcesparams.vpcCidrBlock,
+        googleVpcResources.vpc.name
+      );
+      createGooglePeerTunnel(scope, googleProvider, awsGoogleVpnParams);
+
+      // AWS VPN Connection Routes for Google (Single Tunnel Only)
+      if (isSingleTunnel) {
+        const awsGoogleVpnConnectionRoutes: RouteConfig[] = [
+          {
+            target: "Google",
+            cidrBlock: googleVpcResourcesparams.vpcCidrblock,
           },
         ];
 
-        const vpnConnectionId = awsAzureCgwVpns[0]?.vpnConnection?.id;
+        const vpnConnectionId = awsGoogleCgwVpns[0]?.vpnConnection?.id;
         if (!vpnConnectionId) {
           throw new Error(
             "VPN Connection ID not found in AWS Customer Gateway."
@@ -368,131 +230,277 @@ export function createVpnResources(
         }
 
         createVpnConnectionRoutes(scope, awsProvider, {
-          routes: awsAzureVpnConnectionRoutes,
+          routes: awsGoogleVpnConnectionRoutes,
           vpnConnectionId: vpnConnectionId,
         });
       }
     }
 
-    if (googleToAzure) {
-      // Google VPN Gateway (Connect Azure)
-      const azureVpnConnections = azureVng.publicIpData.flatMap((pip) => [
-        {
-          address: pip.ipAddress,
-          ipAddress: azureVpnGatewayParams.vpnProps.googlePeerIp1,
-          preshared_key: azureGoogleVpnparams.presharedKey,
-          peerAddress: azureVpnGatewayParams.vpnProps.googleGWip1,
-        },
-        {
-          address: pip.ipAddress,
-          ipAddress: azureVpnGatewayParams.vpnProps.googlePeerIp2,
-          preshared_key: azureGoogleVpnparams.presharedKey,
-          peerAddress: azureVpnGatewayParams.vpnProps.googleGWip2,
-        },
-      ]);
+    if (awsToAzure || googleToAzure) {
+      // Azure VPN Gateway
+      const vpnProps: any = {
+        type: azureVpnparams.type,
+        vpnType: azureVpnparams.vpnType,
+        sku: azureVpnparams.sku,
+        azureAsn: azureVpnparams.azureAsn,
+        pipAlloc: azureVpnparams.pipAlloc,
+      };
 
-      const GoogleAzureVpnParams = {
-        vpcNetwork: googleVpcResources.vpc.name,
-        connectDestination: googleAzureVpnParams.connectDestination,
-        vpnGatewayName: googleAzureVpnParams.vpnGatewayName,
-        cloudRouterName: googleAzureVpnParams.cloudRouterName,
-        bgpGoogleAsn: googleAzureVpnParams.bgpGoogleAsn,
+      if (awsToAzure) {
+        // AWS
+        vpnProps.awsGwIp1ip1 = azureAwsVpnparams.awsGwIp1ip1;
+        vpnProps.awsGwIp1ip2 = azureAwsVpnparams.awsGwIp1ip2;
+        vpnProps.awsGwIp2ip1 = azureAwsVpnparams.awsGwIp2ip1;
+        vpnProps.awsGwIp2ip2 = azureAwsVpnparams.awsGwIp2ip2;
+      }
+
+      if (googleToAzure) {
+        // Google
+        vpnProps.googleGWip1 = azureGoogleVpnparams.googleGwIp1;
+        vpnProps.googleGWip2 = azureGoogleVpnparams.googleGwIp2;
+        vpnProps.googlePeerIp1 = azureGoogleVpnparams.googlePeerIp1;
+        vpnProps.googlePeerIp2 = azureGoogleVpnparams.googlePeerIp2;
+      }
+
+      const azureVpnGatewayResourceparams = {
+        resourceGroupName: azureCommonparams.resourceGroup,
+        virtualNetworkName: azureVnetResources.vnet.name,
+        VpnGatewayName: azureVpnGatewayParams.VpnGatewayName,
+        gatewaySubnetCidr: azureVpnparams.gatewaySubnetCidr,
+        publicIpNames: azureVpnparams.publicIpNames,
+        location: azureCommonparams.location,
+        vpnProps: vpnProps,
+        diagnosticSettings: {
+          retentionInDays: azureVpnparams.retentionInDays,
+        },
         isSingleTunnel: isSingleTunnel,
       };
-      const googleAzureVpnGateways = createGoogleVpnGateway(
-        scope,
-        googleProvider,
-        GoogleAzureVpnParams
-      );
 
-      // Obtain IP address of VPNGW in Google (Azure)
-      const azureGoogleVpnGatewayIpAddresses: string[] = [];
-      if (isComputeHaVpnGateway(googleAzureVpnGateways.vpnGateway)) {
-        const azureinterfaceCount = 2;
-        for (let index = 0; index < azureinterfaceCount; index++) {
-          const interfaceObj =
-            googleAzureVpnGateways.vpnGateway.vpnInterfaces.get(index);
-          if (interfaceObj) {
-            azureGoogleVpnGatewayIpAddresses.push(interfaceObj.ipAddress);
-          }
-        }
-      }
-
-      // Google VPN tunnels and peers (Azure)
-      const azureTunnelcount = 2;
-      const azureGoogleVpnGateway = {
-        vpnGatewayId: googleAzureVpnGateways.vpnGateway.id,
-        peerAsn: azureVpnparams.azureAsn,
-      };
-      const azureExternalVpnGateway = {
-        name: googleAzureVpnParams.vpnGatewayName,
-        interfaces: azureVng.publicIpData.map((pip) => ({
-          ipAddress: pip.ipAddress,
-        })),
-      };
-      const azureGoogleVpnParams = createGoogleVpnPeerParams(
-        destinationAzure,
-        azureTunnelcount,
-        googleAzureVpnParams.ikeVersion,
-        googleAzureVpnParams.cloudRouterName,
-        azureGoogleVpnGateway,
-        azureExternalVpnGateway,
-        azureVpnConnections,
-        isSingleTunnel,
-        googleVpcResourcesparams.vpcCidrblock,
-        azureVnetResourcesparams.vnetAddressSpace,
-        googleVpcResources.vpc.name
-      );
-      resources.azureGoogleVpnTunnels = createGooglePeerTunnel(
-        scope,
-        googleProvider,
-        azureGoogleVpnParams
-      );
-
-      // Azure localGateway and tunnels (Connect Google)
-      const googleAzureVpnTunnels = [];
-      if (isComputeHaVpnGateway(googleAzureVpnGateways.vpnGateway)) {
-        const vpninterfacesCount = 2;
-        for (let index = 0; index < vpninterfacesCount; index++) {
-          const interfaceObj =
-            googleAzureVpnGateways.vpnGateway.vpnInterfaces.get(index);
-          if (interfaceObj && interfaceObj.ipAddress) {
-            googleAzureVpnTunnels.push({
-              address: interfaceObj.ipAddress,
-              shared_key: azureGoogleVpnparams.presharedKey,
-              cidrhost:
-                index === 0
-                  ? azureGoogleVpnparams.googlePeerIp1
-                  : azureGoogleVpnparams.googlePeerIp2,
-            });
-          }
-        }
-      }
-
-      // Create Azure Local Gateway (Google)
-      const googleTunnels = googleAzureVpnTunnels.map((tunnel, _index) => ({
-        localNetworkGatewayName: `${azureVnetResources.vnet.name}-${destinationGoogle}-lng`,
-        localGatewayAddress: tunnel.address,
-        localAddressSpaces: [googleVpcResourcesparams.vpcCidrblock],
-        sharedKey: tunnel.shared_key,
-        bgpSettings: {
-          asn: googleAzureVpnParams.bgpGoogleAsn,
-          bgpPeeringAddress: tunnel.cidrhost,
-        },
-      }));
-      const googleAzureLocalGatewayParams = createLocalGatewayParams(
-        azureVng.virtualNetworkGateway.id,
-        destinationGoogle,
-        googleTunnels,
-        isSingleTunnel
-      );
-      resources.googleAzureLocalGateways = createAzureLocalGateways(
+      const azureVng = createAzureVpnGateway(
         scope,
         azureProvider,
-        googleAzureLocalGatewayParams
+        azureVpnGatewayResourceparams
       );
+
+      if (awsToAzure) {
+        const azurePublicIpAddresses = azureVng.publicIpData.map(
+          (pip) => pip.ipAddress
+        );
+
+        // const azurePublicIpAddresses = azureVng.publicIpData.map(
+        //   (_, index) => Fn.element(azureVng.publicIpData, index).ipAddress
+        // );
+
+        // AWS CustomerGateway (Connect Azure)
+        const azureCgwParams = createCustomerGatewayParams(
+          destinationAzure,
+          azureVpnparams.azureAsn,
+          resources.awsVpnGateway.id,
+          azurePublicIpAddresses,
+          isSingleTunnel
+        );
+        const azureCustomerGatewayParams = {
+          ...azureCgwParams,
+          azureVpnProps: {
+            awsGwIpCidr1: azureAwsVpnparams.awsGwIp1Cidr,
+            awsGwIpCidr2: azureAwsVpnparams.awsGwIp2Cidr,
+          },
+        };
+        const awsAzureCgwVpns = createAwsCustomerGateway(
+          scope,
+          awsProvider,
+          azureCustomerGatewayParams
+        );
+
+        // Create Azure Local Gateway (AWS)
+        const awsAzureVpnTunnels = awsAzureCgwVpns
+          .flatMap((cgw, index) => {
+            if (!cgw.vpnConnection) return [];
+            const tunnelIndex = index + 1;
+            return [
+              {
+                address: cgw.vpnConnection.tunnel1Address,
+                shared_key: cgw.vpnConnection.tunnel1PresharedKey,
+                cidrhost: (azureAwsVpnparams as any)[
+                  `azureAwsGwIp${tunnelIndex}ip1`
+                ],
+              },
+              {
+                address: cgw.vpnConnection.tunnel2Address,
+                shared_key: cgw.vpnConnection.tunnel2PresharedKey,
+                cidrhost: (azureAwsVpnparams as any)[
+                  `azureAwsGwIp${tunnelIndex}ip2`
+                ],
+              },
+            ];
+          })
+          .filter((tunnel) => tunnel !== null);
+
+        const awsTunnels = awsAzureVpnTunnels.map((tunnel, _index) => ({
+          localNetworkGatewayName: `${azureVnetResources.vnet.name}-${destinationAws}-lng`,
+          localGatewayAddress: tunnel.address,
+          localAddressSpaces: [awsVpcResourcesparams.vpcCidrBlock],
+          sharedKey: tunnel.shared_key,
+          bgpSettings: {
+            asn: awsVpnparams.bgpAwsAsn,
+            bgpPeeringAddress: tunnel.cidrhost,
+          },
+        }));
+
+        const awsAzureLocalGatewayParams = createLocalGatewayParams(
+          azureVng.virtualNetworkGateway.id,
+          destinationAws,
+          awsTunnels,
+          isSingleTunnel
+        );
+        resources.awsAzureLocalGateways = createAzureLocalGateways(
+          scope,
+          azureProvider,
+          awsAzureLocalGatewayParams
+        );
+
+        // AWS VPN Connection Routes for Azure (Single Tunnel Only)
+        if (isSingleTunnel) {
+          const awsAzureVpnConnectionRoutes: RouteConfig[] = [
+            {
+              target: "Azure",
+              cidrBlock: azureVnetResourcesparams.vnetAddressSpace,
+            },
+          ];
+
+          const vpnConnectionId = awsAzureCgwVpns[0]?.vpnConnection?.id;
+          if (!vpnConnectionId) {
+            throw new Error(
+              "VPN Connection ID not found in AWS Customer Gateway."
+            );
+          }
+
+          createVpnConnectionRoutes(scope, awsProvider, {
+            routes: awsAzureVpnConnectionRoutes,
+            vpnConnectionId: vpnConnectionId,
+          });
+        }
+      }
+
+      if (googleToAzure) {
+        // Google VPN Gateway (Connect Azure)
+        const azureVpnConnections = azureVng.publicIpData.flatMap((pip) => [
+          {
+            address: pip.ipAddress,
+            ipAddress: azureVpnGatewayParams.vpnProps.googlePeerIp1,
+            preshared_key: azureGoogleVpnparams.presharedKey,
+            peerAddress: azureVpnGatewayParams.vpnProps.googleGWip1,
+          },
+          {
+            address: pip.ipAddress,
+            ipAddress: azureVpnGatewayParams.vpnProps.googlePeerIp2,
+            preshared_key: azureGoogleVpnparams.presharedKey,
+            peerAddress: azureVpnGatewayParams.vpnProps.googleGWip2,
+          },
+        ]);
+
+        const GoogleAzureVpnParams = {
+          vpcNetwork: googleVpcResources.vpc.name,
+          connectDestination: googleAzureVpnParams.connectDestination,
+          vpnGatewayName: googleAzureVpnParams.vpnGatewayName,
+          cloudRouterName: googleAzureVpnParams.cloudRouterName,
+          bgpGoogleAsn: googleAzureVpnParams.bgpGoogleAsn,
+          isSingleTunnel: isSingleTunnel,
+        };
+        const googleAzureVpnGateways = createGoogleVpnGateway(
+          scope,
+          googleProvider,
+          GoogleAzureVpnParams
+        );
+
+        // Obtain IP address of VPNGW in Google (Azure)
+        const azureGoogleVpnGatewayIpAddresses: string[] = [];
+        if (isComputeHaVpnGateway(googleAzureVpnGateways.vpnGateway)) {
+          const azureinterfaceCount = 2;
+          for (let index = 0; index < azureinterfaceCount; index++) {
+            const interfaceObj =
+              googleAzureVpnGateways.vpnGateway.vpnInterfaces.get(index);
+            if (interfaceObj) {
+              azureGoogleVpnGatewayIpAddresses.push(interfaceObj.ipAddress);
+            }
+          }
+        }
+
+        // Google VPN tunnels and peers (Azure)
+        const azureTunnelcount = 2;
+        const azureGoogleVpnGateway = {
+          vpnGatewayId: googleAzureVpnGateways.vpnGateway.id,
+          peerAsn: azureVpnparams.azureAsn,
+        };
+        const azureExternalVpnGateway = {
+          name: googleAzureVpnParams.vpnGatewayName,
+          interfaces: azureVng.publicIpData.map((pip) => ({
+            ipAddress: pip.ipAddress,
+          })),
+        };
+        const azureGoogleVpnParams = createGoogleVpnPeerParams(
+          destinationAzure,
+          azureTunnelcount,
+          googleAzureVpnParams.ikeVersion,
+          googleAzureVpnParams.cloudRouterName,
+          azureGoogleVpnGateway,
+          azureExternalVpnGateway,
+          azureVpnConnections,
+          isSingleTunnel,
+          googleVpcResourcesparams.vpcCidrblock,
+          azureVnetResourcesparams.vnetAddressSpace,
+          googleVpcResources.vpc.name
+        );
+        resources.azureGoogleVpnTunnels = createGooglePeerTunnel(
+          scope,
+          googleProvider,
+          azureGoogleVpnParams
+        );
+
+        // Azure localGateway and tunnels (Connect Google)
+        const googleAzureVpnTunnels = [];
+        if (isComputeHaVpnGateway(googleAzureVpnGateways.vpnGateway)) {
+          const vpninterfacesCount = 2;
+          for (let index = 0; index < vpninterfacesCount; index++) {
+            const interfaceObj =
+              googleAzureVpnGateways.vpnGateway.vpnInterfaces.get(index);
+            if (interfaceObj && interfaceObj.ipAddress) {
+              googleAzureVpnTunnels.push({
+                address: interfaceObj.ipAddress,
+                shared_key: azureGoogleVpnparams.presharedKey,
+                cidrhost:
+                  index === 0
+                    ? azureGoogleVpnparams.googlePeerIp1
+                    : azureGoogleVpnparams.googlePeerIp2,
+              });
+            }
+          }
+        }
+
+        // Create Azure Local Gateway (Google)
+        const googleTunnels = googleAzureVpnTunnels.map((tunnel, _index) => ({
+          localNetworkGatewayName: `${azureVnetResources.vnet.name}-${destinationGoogle}-lng`,
+          localGatewayAddress: tunnel.address,
+          localAddressSpaces: [googleVpcResourcesparams.vpcCidrblock],
+          sharedKey: tunnel.shared_key,
+          bgpSettings: {
+            asn: googleAzureVpnParams.bgpGoogleAsn,
+            bgpPeeringAddress: tunnel.cidrhost,
+          },
+        }));
+        const googleAzureLocalGatewayParams = createLocalGatewayParams(
+          azureVng.virtualNetworkGateway.id,
+          destinationGoogle,
+          googleTunnels,
+          isSingleTunnel
+        );
+        resources.googleAzureLocalGateways = createAzureLocalGateways(
+          scope,
+          azureProvider,
+          googleAzureLocalGatewayParams
+        );
+      }
     }
   }
-
   return resources;
 }
